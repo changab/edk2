@@ -15,7 +15,11 @@
 
 [Includes]
   Include
-
+  
+[Includes.Common.Private]
+  Library/JanssonLib/jansson/src
+  Library/Include
+  
 [Protocols]
   ## Include/Protocol/RestEx.h
   gEfiRestExProtocolGuid               = { 0x55648b91, 0xe7d, 0x40a3, { 0xa9, 0xb3, 0xa8, 0x15, 0xd7, 0xea, 0xdf, 0x97 }}

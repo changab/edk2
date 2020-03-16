@@ -1,0 +1,41 @@
+=============================================================================
+                             Introduction
+=============================================================================
+  Jansson is a C library for encoding, decoding and manipulating JSON data.
+Its main features and design principles are:
+
+  •Simple and intuitive API and data model
+  •Comprehensive documentation
+  •No dependencies on other libraries
+  •Full Unicode support (UTF-8)
+  •Extensive test suite
+
+  Jansson is licensed under the MIT license. It is used in production and
+its API is stable. It works on numerous platforms, including numerous Unix
+like systems and Windows. It’s suitable for use on any system, including
+desktop, server, and small embedded systems.
+
+  In UEFI/EDKII environment, Redfish project consumes jansson to achieve JSON
+operations. This HOWTO documents jansson building under UEFI/EDKII environment.
+
+=============================================================================
+                      HOW to Install jansson for UEFI Building
+=============================================================================
+
+  1. The user can use the below command to clone jansson lib under the path:
+  RedfishPkg\Library\JanssonLib.
+
+  $ git clone https://github.com/akheron/jansson
+
+  2. UEFI supports building with the jansson v2.12, the user needs to checkout
+  to tag version: v2.12 under jansson folder with command:
+
+  $ git checkout v2.12
+
+  3. Building the raw jansson in UEFI directly will have some building errors,
+  the user needs to copy the file: Patch-Jansson-For-UEFI.patch to jansson
+  folder and patch it with command:
+
+  $ git am Patch-Jansson-For-UEFI.patch
+
+  4. The patched jansson lib should pass build under UEFI/EDKII environment.

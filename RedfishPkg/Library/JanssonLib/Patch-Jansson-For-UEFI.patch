@@ -1,0 +1,1058 @@
+From 5d6324afd90981ed08bb6365a0d232dc5ac7fc08 Mon Sep 17 00:00:00 2001
+From: Wang Fan <fan.wang@intel.com>
+Date: Thu, 31 Jan 2019 10:01:13 +0800
+Subject: [Patch] RedfishPkg: Fix UEFI building errors for jansson lib
+
+This patch is to solve jansson v2.12 building errors in UEFI environment,
+and main changes include:
+
+* Remove real number support in jansson.
+* Remove file operations in jansson.
+* Remove direct Win32 system API call in jansson.
+* Update include file path to solve conflicts.
+* Add jansson configuration file for UEFI
+
+Contributed-under: TianoCore Contribution Agreement 1.1
+Signed-off-by: Wang Fan <fan.wang@intel.com>
+---
+ src/dump.c            | 16 +++++++++++-----
+ src/error.c           |  2 +-
+ src/hashtable.c       | 10 +++++-----
+ src/hashtable.h       |  2 +-
+ src/hashtable_seed.c  | 43 ++++++++++++++++++++++++++++---------------
+ src/jansson.h         | 27 +++++++++++++++++++--------
+ src/jansson_config.h  | 51 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ src/jansson_private.h |  9 +++++++--
+ src/load.c            | 35 ++++++++++++++++++++++++-----------
+ src/lookup3.h         | 10 +++++-----
+ src/memory.c          |  4 ++--
+ src/pack_unpack.c     |  4 +++-
+ src/strbuffer.c       |  4 ++--
+ src/strbuffer.h       |  2 +-
+ src/strconv.c         | 22 ++++++++++++----------
+ src/utf.c             |  2 +-
+ src/utf.h             |  4 ++--
+ src/value.c           | 48 +++++++++++++++++++++++++++++++++++++++---------
+ 18 files changed, 214 insertions(+), 81 deletions(-)
+ create mode 100644 src/jansson_config.h
+
+diff --git a/src/dump.c b/src/dump.c
+index 89802c6..faca208 100644
+--- a/src/dump.c
++++ b/src/dump.c
+@@ -9,16 +9,16 @@
+ #define _GNU_SOURCE
+ #endif
+ 
+ #include "jansson_private.h"
+ 
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-#include <assert.h>
++#include <CrtSupport/stdio.h>
++#include <CrtSupport/stdlib.h>
++#include <CrtSupport/string.h>
++#include <CrtSupport/assert.h>
+ #ifdef HAVE_UNISTD_H
+-#include <unistd.h>
++#include <CrtSupport/unistd.h>
+ #endif
+ 
+ #include "jansson.h"
+ #include "strbuffer.h"
+ #include "utf.h"
+@@ -49,10 +49,11 @@ static int dump_to_buffer(const char *buffer, size_t size, void *data)
+ 
+     buf->used += size;
+     return 0;
+ }
+ 
++#ifdef SUPPORT_JANSSON_FILE_OPS
+ static int dump_to_file(const char *buffer, size_t size, void *data)
+ {
+     FILE *dest = (FILE *)data;
+     if(fwrite(buffer, size, 1, dest) != 1)
+         return -1;
+@@ -66,10 +67,11 @@ static int dump_to_fd(const char *buffer, size_t size, void *data)
+     if(write(*dest, buffer, size) == (ssize_t)size)
+         return 0;
+ #endif
+     return -1;
+ }
++#endif
+ 
+ /* 32 spaces (the maximum indentation size) */
+ static const char whitespace[] = "                                ";
+ 
+ static int dump_indent(size_t flags, int depth, int space, json_dump_callback_t dump, void *data)
+@@ -237,10 +239,11 @@ static int do_dump(const json_t *json, size_t flags, int depth,
+                 return -1;
+ 
+             return dump(buffer, size, data);
+         }
+ 
++#ifdef SUPPORT_JANSSON_JSON_REAL
+         case JSON_REAL:
+         {
+             char buffer[MAX_REAL_STR_LENGTH];
+             int size;
+             double value = json_real_value(json);
+@@ -250,10 +253,11 @@ static int do_dump(const json_t *json, size_t flags, int depth,
+             if(size < 0)
+                 return -1;
+ 
+             return dump(buffer, size, data);
+         }
++#endif
+ 
+         case JSON_STRING:
+             return dump_string(json_string_value(json), json_string_length(json), dump, data, flags);
+ 
+         case JSON_ARRAY:
+@@ -457,10 +461,11 @@ size_t json_dumpb(const json_t *json, char *buffer, size_t size, size_t flags)
+         return 0;
+ 
+     return buf.used;
+ }
+ 
++#ifdef SUPPORT_JANSSON_FILE_OPS
+ int json_dumpf(const json_t *json, FILE *output, size_t flags)
+ {
+     return json_dump_callback(json, dump_to_file, (void *)output, flags);
+ }
+ 
+@@ -482,10 +487,11 @@ int json_dump_file(const json_t *json, const char *path, size_t flags)
+     if(fclose(output) != 0)
+         return -1;
+ 
+     return result;
+ }
++#endif
+ 
+ int json_dump_callback(const json_t *json, json_dump_callback_t callback, void *data, size_t flags)
+ {
+     int res;
+     hashtable_t parents_set;
+diff --git a/src/error.c b/src/error.c
+index f5da6b9..bf146f3 100644
+--- a/src/error.c
++++ b/src/error.c
+@@ -1,6 +1,6 @@
+-#include <string.h>
++#include <CrtSupport/string.h>
+ #include "jansson_private.h"
+ 
+ void jsonp_error_init(json_error_t *error, const char *source)
+ {
+     if(error)
+diff --git a/src/hashtable.c b/src/hashtable.c
+index c819319..820962e 100644
+--- a/src/hashtable.c
++++ b/src/hashtable.c
+@@ -4,21 +4,21 @@
+  * This library is free software; you can redistribute it and/or modify
+  * it under the terms of the MIT license. See LICENSE for details.
+  */
+ 
+ #if HAVE_CONFIG_H
+-#include <jansson_private_config.h>
++#include <JanssonConfig/jansson_private_config.h>
+ #endif
+ 
+-#include <stdlib.h>
+-#include <string.h>
++#include <CrtSupport/stdlib.h>
++#include <CrtSupport/string.h>
+ 
+ #if HAVE_STDINT_H
+-#include <stdint.h>
++#include <CrtSupport/stdint.h>
+ #endif
+ 
+-#include <jansson_config.h>   /* for JSON_INLINE */
++#include "jansson_config.h"   /* for JSON_INLINE */
+ #include "jansson_private.h"  /* for container_of() */
+ #include "hashtable.h"
+ 
+ #ifndef INITIAL_HASHTABLE_ORDER
+ #define INITIAL_HASHTABLE_ORDER 3
+diff --git a/src/hashtable.h b/src/hashtable.h
+index c112834..71c7c14 100644
+--- a/src/hashtable.h
++++ b/src/hashtable.h
+@@ -6,11 +6,11 @@
+  */
+ 
+ #ifndef HASHTABLE_H
+ #define HASHTABLE_H
+ 
+-#include <stdlib.h>
++#include <CrtSupport/stdlib.h>
+ #include "jansson.h"
+ 
+ struct hashtable_list {
+     struct hashtable_list *prev;
+     struct hashtable_list *next;
+diff --git a/src/hashtable_seed.c b/src/hashtable_seed.c
+index 540358a..a843609 100644
+--- a/src/hashtable_seed.c
++++ b/src/hashtable_seed.c
+@@ -4,45 +4,45 @@
+ 
+ #ifdef HAVE_CONFIG_H
+ #include <jansson_private_config.h>
+ #endif
+ 
+-#include <stdio.h>
+-#include <time.h>
++#include <CrtSupport/stdio.h>
++#include <CrtSupport/time.h>
+ 
+ #ifdef HAVE_STDINT_H
+-#include <stdint.h>
++#include <CrtSupport/stdint.h>
+ #endif
+ 
+ #ifdef HAVE_FCNTL_H
+-#include <fcntl.h>
++#include <CrtSupport/fcntl.h>
+ #endif
+ 
+ #ifdef HAVE_SCHED_H
+-#include <sched.h>
++#include <CrtSupport/sched.h>
+ #endif
+ 
+ #ifdef HAVE_UNISTD_H
+-#include <unistd.h>
++#include <CrtSupport/unistd.h>
+ #endif
+ 
+ #ifdef HAVE_SYS_STAT_H
+-#include <sys/stat.h>
++#include <CrtSupport/sys/stat.h>
+ #endif
+ 
+ #ifdef HAVE_SYS_TIME_H
+-#include <sys/time.h>
++#include <CrtSupport/sys/time.h>
+ #endif
+ 
+ #ifdef HAVE_SYS_TYPES_H
+-#include <sys/types.h>
++#include <CrtSupport/sys/types.h>
+ #endif
+ 
+-#if defined(_WIN32)
++//#if defined(_WIN32)
+ /* For GetModuleHandle(), GetProcAddress() and GetCurrentProcessId() */
+-#include <windows.h>
+-#endif
++//#include <windows.h>
++//#endif
+ 
+ #include "jansson.h"
+ 
+ 
+ static uint32_t buf_to_uint32(char *data) {
+@@ -152,16 +152,20 @@ static int seed_from_timestamp_and_pid(uint32_t *seed) {
+     /* Seconds only */
+     *seed = (uint32_t)time(NULL);
+ #endif
+ 
+     /* XOR with PID for more randomness */
++
++/*
++Comment out these code since UEFI doesn't support Process Id.
++
+ #if defined(_WIN32)
+     *seed ^= (uint32_t)GetCurrentProcessId();
+ #elif defined(HAVE_GETPID)
+     *seed ^= (uint32_t)getpid();
+ #endif
+-
++*/
+     return 0;
+ }
+ 
+ static uint32_t generate_seed() {
+     uint32_t seed = 0;
+@@ -240,30 +244,39 @@ void json_object_seed(size_t seed) {
+ #endif
+             }
+         } while(hashtable_seed == 0);
+     }
+ }
++
++/*
++Comment out these code since UEFI doesn't support Windows API call.
++
+ #elif defined(_WIN32)
+ static long seed_initialized = 0;
+ void json_object_seed(size_t seed) {
+     uint32_t new_seed = (uint32_t)seed;
+ 
+     if (hashtable_seed == 0) {
+         if (InterlockedIncrement(&seed_initialized) == 1) {
+-            /* Do the seeding ourselves */
++            //
++            // Do the seeding ourselves
++            //
+             if (new_seed == 0)
+                 new_seed = generate_seed();
+ 
+             hashtable_seed = new_seed;
+         } else {
+-            /* Wait for another thread to do the seeding */
++            //
++            // Wait for another thread to do the seeding
++            //
+             do {
+                 SwitchToThread();
+             } while (hashtable_seed == 0);
+         }
+     }
+ }
++*/
+ #else
+ /* Fall back to a thread-unsafe version */
+ void json_object_seed(size_t seed) {
+     uint32_t new_seed = (uint32_t)seed;
+ 
+diff --git a/src/jansson.h b/src/jansson.h
+index e4e73e2..e7b6158 100644
+--- a/src/jansson.h
++++ b/src/jansson.h
+@@ -6,13 +6,13 @@
+  */
+ 
+ #ifndef JANSSON_H
+ #define JANSSON_H
+ 
+-#include <stdio.h>
+-#include <stdlib.h>  /* for size_t */
+-#include <stdarg.h>
++#include <CrtSupport/stdio.h>
++#include <CrtSupport/stdlib.h>  /* for size_t */
++#include <CrtSupport/stdarg.h>
+ 
+ #include "jansson_config.h"
+ 
+ #ifdef __cplusplus
+ extern "C" {
+@@ -63,15 +63,15 @@ typedef struct json_t {
+     volatile size_t refcount;
+ } json_t;
+ 
+ #ifndef JANSSON_USING_CMAKE /* disabled if using cmake */
+ #if JSON_INTEGER_IS_LONG_LONG
+-#ifdef _WIN32
+-#define JSON_INTEGER_FORMAT "I64d"
+-#else
++//#ifdef _WIN32
++//#define JSON_INTEGER_FORMAT "I64d"
++//#else
+ #define JSON_INTEGER_FORMAT "lld"
+-#endif
++//#endif
+ typedef long long json_int_t;
+ #else
+ #define JSON_INTEGER_FORMAT "ld"
+ typedef long json_int_t;
+ #endif /* JSON_INTEGER_IS_LONG_LONG */
+@@ -97,11 +97,15 @@ json_t *json_array(void);
+ json_t *json_string(const char *value);
+ json_t *json_stringn(const char *value, size_t len);
+ json_t *json_string_nocheck(const char *value);
+ json_t *json_stringn_nocheck(const char *value, size_t len);
+ json_t *json_integer(json_int_t value);
++
++#ifdef SUPPORT_JANSSON_JSON_REAL
+ json_t *json_real(double value);
++#endif
++
+ json_t *json_true(void);
+ json_t *json_false(void);
+ #define json_boolean(val)      ((val) ? json_true() : json_false())
+ json_t *json_null(void);
+ 
+@@ -270,19 +274,26 @@ int json_array_insert(json_t *array, size_t ind, json_t *value)
+ }
+ 
+ const char *json_string_value(const json_t *string);
+ size_t json_string_length(const json_t *string);
+ json_int_t json_integer_value(const json_t *integer);
++
++#ifdef SUPPORT_JANSSON_JSON_REAL
+ double json_real_value(const json_t *real);
+-double json_number_value(const json_t *json);
++#endif
++
++json_int_t json_number_value(const json_t *json);
+ 
+ int json_string_set(json_t *string, const char *value);
+ int json_string_setn(json_t *string, const char *value, size_t len);
+ int json_string_set_nocheck(json_t *string, const char *value);
+ int json_string_setn_nocheck(json_t *string, const char *value, size_t len);
+ int json_integer_set(json_t *integer, json_int_t value);
++
++#ifdef SUPPORT_JANSSON_JSON_REAL
+ int json_real_set(json_t *real, double value);
++#endif
+ 
+ /* pack, unpack */
+ 
+ json_t *json_pack(const char *fmt, ...) JANSSON_ATTRS(warn_unused_result);
+ json_t *json_pack_ex(json_error_t *error, size_t flags, const char *fmt, ...) JANSSON_ATTRS(warn_unused_result);
+diff --git a/src/jansson_config.h b/src/jansson_config.h
+new file mode 100644
+index 0000000..9215ac7
+--- /dev/null
++++ b/src/jansson_config.h
+@@ -0,0 +1,51 @@
++/*
++ * Copyright (c) 2010-2016 Petri Lehtinen <petri@digip.org>
++ *
++ * Jansson is free software; you can redistribute it and/or modify
++ * it under the terms of the MIT license. See LICENSE for details.
++ *
++ *
++ * This file specifies a part of the site-specific configuration for
++ * Jansson, namely those things that affect the public API in
++ * jansson.h.
++ *
++ * The configure script copies this file to jansson_config.h and
++ * replaces @var@ substitutions by values that fit your system. If you
++ * cannot run the configure script, you can do the value substitution
++ * by hand.
++ */
++
++#ifndef JANSSON_CONFIG_H
++#define JANSSON_CONFIG_H
++
++/* If your compiler supports the inline keyword in C, JSON_INLINE is
++   defined to `inline', otherwise empty. In C++, the inline is always
++   supported. */
++#ifdef __cplusplus
++#define JSON_INLINE inline
++#else
++#define JSON_INLINE
++#endif
++
++/* If your compiler supports the `long long` type and the strtoll()
++   library function, JSON_INTEGER_IS_LONG_LONG is defined to 1,
++   otherwise to 0. */
++#define JSON_INTEGER_IS_LONG_LONG 1
++
++/* If locale.h and localeconv() are available, define to 1,
++   otherwise to 0. */
++#define JSON_HAVE_LOCALECONV 0
++
++/* If __atomic builtins are available they will be used to manage
++   reference counts of json_t. */
++#define JSON_HAVE_ATOMIC_BUILTINS 0
++
++/* If __atomic builtins are not available we try using __sync builtins
++   to manage reference counts of json_t. */
++#define JSON_HAVE_SYNC_BUILTINS 0
++
++/* Maximum recursion depth for parsing JSON input.
++   This limits the depth of e.g. array-within-array constructions. */
++#define JSON_PARSER_MAX_DEPTH 2048
++
++#endif
+diff --git a/src/jansson_private.h b/src/jansson_private.h
+index bf86c57..2ac760c 100644
+--- a/src/jansson_private.h
++++ b/src/jansson_private.h
+@@ -6,12 +6,12 @@
+  */
+ 
+ #ifndef JANSSON_PRIVATE_H
+ #define JANSSON_PRIVATE_H
+ 
+-#include "jansson_private_config.h"
+-#include <stddef.h>
++#include <JanssonConfig/jansson_private_config.h>
++#include <CrtSupport/stddef.h>
+ #include "jansson.h"
+ #include "hashtable.h"
+ #include "strbuffer.h"
+ 
+ #define container_of(ptr_, type_, member_)  \
+@@ -48,14 +48,17 @@ typedef struct {
+     json_t json;
+     char *value;
+     size_t length;
+ } json_string_t;
+ 
++#ifdef SUPPORT_JANSSON_JSON_REAL
+ typedef struct {
+     json_t json;
+     double value;
+ } json_real_t;
++#endif
++
+ 
+ typedef struct {
+     json_t json;
+     json_int_t value;
+ } json_integer_t;
+@@ -77,13 +80,15 @@ void jsonp_error_set(json_error_t *error, int line, int column,
+                      const char *msg, ...);
+ void jsonp_error_vset(json_error_t *error, int line, int column,
+                       size_t position, enum json_error_code code,
+                       const char *msg, va_list ap);
+ 
++#ifdef SUPPORT_JANSSON_JSON_REAL
+ /* Locale independent string<->double conversions */
+ int jsonp_strtod(strbuffer_t *strbuffer, double *out);
+ int jsonp_dtostr(char *buffer, size_t size, double value, int prec);
++#endif
+ 
+ /* Wrappers for custom memory functions */
+ void* jsonp_malloc(size_t size) JANSSON_ATTRS(warn_unused_result);
+ void jsonp_free(void *ptr);
+ char *jsonp_strndup(const char *str, size_t length) JANSSON_ATTRS(warn_unused_result);
+diff --git a/src/load.c b/src/load.c
+index 8700919..e77fed3 100644
+--- a/src/load.c
++++ b/src/load.c
+@@ -9,18 +9,18 @@
+ #define _GNU_SOURCE
+ #endif
+ 
+ #include "jansson_private.h"
+ 
+-#include <errno.h>
+-#include <limits.h>
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-#include <assert.h>
++#include <CrtSupport/errno.h>
++#include <CrtSupport/limits.h>
++#include <CrtSupport/stdio.h>
++#include <CrtSupport/stdlib.h>
++#include <CrtSupport/string.h>
++#include <CrtSupport/assert.h>
+ #ifdef HAVE_UNISTD_H
+-#include <unistd.h>
++#include <CrtSupport/unistd.h>
+ #endif
+ 
+ #include "jansson.h"
+ #include "strbuffer.h"
+ #include "utf.h"
+@@ -72,11 +72,15 @@ typedef struct {
+         struct {
+             char *val;
+             size_t len;
+         } string;
+         json_int_t integer;
++
++#ifdef SUPPORT_JANSSON_JSON_REAL
+         double real;
++#endif
++
+     } value;
+ } lex_t;
+ 
+ #define stream_to_lex(stream) container_of(stream, lex_t, stream)
+ 
+@@ -479,25 +483,28 @@ out:
+     lex_free_string(lex);
+ }
+ 
+ #ifndef JANSSON_USING_CMAKE /* disabled if using cmake */
+ #if JSON_INTEGER_IS_LONG_LONG
+-#ifdef _MSC_VER  /* Microsoft Visual Studio */
+-#define json_strtoint     _strtoi64
+-#else
++//#ifdef _MSC_VER  /* Microsoft Visual Studio */
++//#define json_strtoint     _strtoi64
++//#else
+ #define json_strtoint     strtoll
+-#endif
++//#endif
+ #else
+ #define json_strtoint     strtol
+ #endif
+ #endif
+ 
+ static int lex_scan_number(lex_t *lex, int c, json_error_t *error)
+ {
+     const char *saved_text;
+     char *end;
++
++#ifdef SUPPORT_JANSSON_JSON_REAL
+     double doubleval;
++#endif
+ 
+     lex->token = TOKEN_INVALID;
+ 
+     if(c == '-')
+         c = lex_get_save(lex, error);
+@@ -543,10 +550,11 @@ static int lex_scan_number(lex_t *lex, int c, json_error_t *error)
+         lex->token = TOKEN_INTEGER;
+         lex->value.integer = intval;
+         return 0;
+     }
+ 
++#ifdef SUPPORT_JANSSON_JSON_REAL
+     if(c == '.') {
+         c = lex_get(lex, error);
+         if(!l_isdigit(c)) {
+             lex_unget(lex, c);
+             goto out;
+@@ -581,10 +589,11 @@ static int lex_scan_number(lex_t *lex, int c, json_error_t *error)
+     }
+ 
+     lex->token = TOKEN_REAL;
+     lex->value.real = doubleval;
+     return 0;
++#endif
+ 
+ out:
+     return -1;
+ }
+ 
+@@ -837,14 +846,16 @@ static json_t *parse_value(lex_t *lex, size_t flags, json_error_t *error)
+         case TOKEN_INTEGER: {
+             json = json_integer(lex->value.integer);
+             break;
+         }
+ 
++#ifdef SUPPORT_JANSSON_JSON_REAL
+         case TOKEN_REAL: {
+             json = json_real(lex->value.real);
+             break;
+         }
++#endif
+ 
+         case TOKEN_TRUE:
+             json = json_true();
+             break;
+ 
+@@ -1003,10 +1014,11 @@ json_t *json_loadb(const char *buffer, size_t buflen, size_t flags, json_error_t
+ 
+     lex_close(&lex);
+     return result;
+ }
+ 
++#ifdef SUPPORT_JANSSON_FILE_OPS
+ json_t *json_loadf(FILE *input, size_t flags, json_error_t *error)
+ {
+     lex_t lex;
+     const char *source;
+     json_t *result;
+@@ -1094,10 +1106,11 @@ json_t *json_load_file(const char *path, size_t flags, json_error_t *error)
+     result = json_loadf(fp, flags, error);
+ 
+     fclose(fp);
+     return result;
+ }
++#endif
+ 
+ #define MAX_BUF_LEN 1024
+ 
+ typedef struct
+ {
+diff --git a/src/lookup3.h b/src/lookup3.h
+index 2fe4c25..f529317 100644
+--- a/src/lookup3.h
++++ b/src/lookup3.h
+@@ -32,26 +32,26 @@ then mix those integers.  This is fast (you can do a lot more thorough
+ mixing with 12*3 instructions on 3 integers than you can with 3 instructions
+ on 1 byte), but shoehorning those bytes into integers efficiently is messy.
+ -------------------------------------------------------------------------------
+ */
+ 
+-#include <stdlib.h>
++#include <CrtSupport/stdlib.h>
+ 
+ #ifdef HAVE_CONFIG_H
+-#include <jansson_private_config.h>
++#include <JanssonConfig/jansson_private_config.h>
+ #endif
+ 
+ #ifdef HAVE_STDINT_H
+-#include <stdint.h>     /* defines uint32_t etc */
++#include <CrtSupport/stdint.h>     /* defines uint32_t etc */
+ #endif
+ 
+ #ifdef HAVE_SYS_PARAM_H
+-#include <sys/param.h>  /* attempt to define endianness */
++#include <CrtSupport/sys/param.h>  /* attempt to define endianness */
+ #endif
+ 
+ #ifdef HAVE_ENDIAN_H
+-# include <endian.h>    /* attempt to define endianness */
++#include <CrtSupport/endian.h>    /* attempt to define endianness */
+ #endif
+ 
+ /*
+  * My best guess at if you are big-endian or little-endian.  This may
+  * need adjustment.
+diff --git a/src/memory.c b/src/memory.c
+index a2be5d2..372e9ea 100644
+--- a/src/memory.c
++++ b/src/memory.c
+@@ -4,12 +4,12 @@
+  *
+  * Jansson is free software; you can redistribute it and/or modify it
+  * under the terms of the MIT license. See LICENSE for details.
+  */
+ 
+-#include <stdlib.h>
+-#include <string.h>
++#include <CrtSupport/stdlib.h>
++#include <CrtSupport/string.h>
+ 
+ #include "jansson.h"
+ #include "jansson_private.h"
+ 
+ /* C89 allows these to be macros */
+diff --git a/src/pack_unpack.c b/src/pack_unpack.c
+index 3b99776..e28a1a3 100644
+--- a/src/pack_unpack.c
++++ b/src/pack_unpack.c
+@@ -4,11 +4,11 @@
+  *
+  * Jansson is free software; you can redistribute it and/or modify
+  * it under the terms of the MIT license. See LICENSE for details.
+  */
+ 
+-#include <string.h>
++#include <CrtSupport/string.h>
+ #include "jansson.h"
+ #include "jansson_private.h"
+ #include "utf.h"
+ 
+ typedef struct {
+@@ -768,10 +768,11 @@ static int unpack(scanner_t *s, json_t *root, va_list *ap)
+                     *target = json_is_true(root);
+             }
+ 
+             return 0;
+ 
++#ifdef SUPPORT_JANSSON_JSON_REAL
+         case 'f':
+             if(root && !json_is_real(root)) {
+                 set_error(s, "<validation>", json_error_wrong_type, "Expected real, got %s",
+                           type_name(root));
+                 return -1;
+@@ -797,10 +798,11 @@ static int unpack(scanner_t *s, json_t *root, va_list *ap)
+                 if(root)
+                     *target = json_number_value(root);
+             }
+ 
+             return 0;
++#endif
+ 
+         case 'O':
+             if(root && !(s->flags & JSON_VALIDATE_ONLY))
+                 json_incref(root);
+             /* Fall through */
+diff --git a/src/strbuffer.c b/src/strbuffer.c
+index 5e8c003..3ec9c75 100644
+--- a/src/strbuffer.c
++++ b/src/strbuffer.c
+@@ -7,12 +7,12 @@
+ 
+ #ifndef _GNU_SOURCE
+ #define _GNU_SOURCE
+ #endif
+ 
+-#include <stdlib.h>
+-#include <string.h>
++#include <CrtSupport/stdlib.h>
++#include <CrtSupport/string.h>
+ #include "jansson_private.h"
+ #include "strbuffer.h"
+ 
+ #define STRBUFFER_MIN_SIZE  16
+ #define STRBUFFER_FACTOR    2
+diff --git a/src/strbuffer.h b/src/strbuffer.h
+index a0276d4..df1c419 100644
+--- a/src/strbuffer.h
++++ b/src/strbuffer.h
+@@ -6,11 +6,11 @@
+  */
+ 
+ #ifndef STRBUFFER_H
+ #define STRBUFFER_H
+ 
+-#include <stdlib.h>
++#include <CrtSupport/stdlib.h>
+ 
+ typedef struct {
+     char *value;
+     size_t length;   /* bytes used */
+     size_t size;     /* bytes allocated */
+diff --git a/src/strconv.c b/src/strconv.c
+index 8075481..961eac1 100644
+--- a/src/strconv.c
++++ b/src/strconv.c
+@@ -1,27 +1,27 @@
+-#include <assert.h>
+-#include <errno.h>
+-#include <stdio.h>
+-#include <string.h>
+-#include <math.h>
++#include <CrtSupport/assert.h>
++#include <CrtSupport/errno.h>
++#include <CrtSupport/stdio.h>
++#include <CrtSupport/string.h>
++#include <CrtSupport/math.h>
+ #ifdef __MINGW32__
+ #undef __NO_ISOCEXT /* ensure stdlib.h will declare prototypes for mingw own 'strtod' replacement, called '__strtod' */
+ #endif
+ #include "jansson_private.h"
+ #include "strbuffer.h"
+ 
+ /* need jansson_private_config.h to get the correct snprintf */
+ #ifdef HAVE_CONFIG_H
+-#include <jansson_private_config.h>
++#include <JanssonConfig/jansson_private_config.h>
+ #endif
+ 
+-#ifdef __MINGW32__
+-#define strtod __strtod
+-#endif
++//#ifdef __MINGW32__
++//#define strtod __strtod
++//#endif
+ 
+ #if JSON_HAVE_LOCALECONV
+-#include <locale.h>
++#include <CrtSupport/locale.h>
+ 
+ /*
+   - This code assumes that the decimal separator is exactly one
+     character.
+ 
+@@ -62,10 +62,11 @@ static void from_locale(char *buffer)
+     if(pos)
+         *pos = '.';
+ }
+ #endif
+ 
++#ifdef SUPPORT_JANSSON_JSON_REAL
+ int jsonp_strtod(strbuffer_t *strbuffer, double *out)
+ {
+     double value;
+     char *end;
+ 
+@@ -141,5 +142,6 @@ int jsonp_dtostr(char *buffer, size_t size, double value, int precision)
+         }
+     }
+ 
+     return (int)length;
+ }
++#endif
+diff --git a/src/utf.c b/src/utf.c
+index be966cb..e56ae3a 100644
+--- a/src/utf.c
++++ b/src/utf.c
+@@ -3,11 +3,11 @@
+  *
+  * Jansson is free software; you can redistribute it and/or modify
+  * it under the terms of the MIT license. See LICENSE for details.
+  */
+ 
+-#include <string.h>
++#include <CrtSupport/string.h>
+ #include "utf.h"
+ 
+ int utf8_encode(int32_t codepoint, char *buffer, size_t *size)
+ {
+     if(codepoint < 0)
+diff --git a/src/utf.h b/src/utf.h
+index e182df7..270a034 100644
+--- a/src/utf.h
++++ b/src/utf.h
+@@ -7,15 +7,15 @@
+ 
+ #ifndef UTF_H
+ #define UTF_H
+ 
+ #ifdef HAVE_CONFIG_H
+-#include <jansson_private_config.h>
++#include <JanssonConfig/jansson_private_config.h>
+ #endif
+ 
+ #ifdef HAVE_STDINT_H
+-#include <stdint.h>
++#include <CrtSupport/stdint.h>
+ #endif
+ 
+ int utf8_encode(int32_t codepoint, char *buffer, size_t *size);
+ 
+ size_t utf8_check_first(char byte);
+diff --git a/src/value.c b/src/value.c
+index 3f964a0..cfb63e0 100644
+--- a/src/value.c
++++ b/src/value.c
+@@ -8,20 +8,20 @@
+ #ifndef _GNU_SOURCE
+ #define _GNU_SOURCE
+ #endif
+ 
+ #ifdef HAVE_CONFIG_H
+-#include <jansson_private_config.h>
++#include <JanssonConfig/jansson_private_config.h>
+ #endif
+ 
+-#include <stddef.h>
+-#include <stdlib.h>
+-#include <string.h>
+-#include <math.h>
++#include <CrtSupport/stddef.h>
++#include <CrtSupport/stdlib.h>
++#include <CrtSupport/string.h>
++#include <CrtSupport/math.h>
+ 
+ #ifdef HAVE_STDINT_H
+-#include <stdint.h>
++#include <CrtSupport/stdint.h>
+ #endif
+ 
+ #include "jansson.h"
+ #include "hashtable.h"
+ #include "jansson_private.h"
+@@ -866,11 +866,11 @@ static int json_integer_equal(const json_t *integer1, const json_t *integer2)
+ static json_t *json_integer_copy(const json_t *integer)
+ {
+     return json_integer(json_integer_value(integer));
+ }
+ 
+-
++#ifdef SUPPORT_JANSSON_JSON_REAL
+ /*** real ***/
+ 
+ json_t *json_real(double value)
+ {
+     json_real_t *real;
+@@ -917,22 +917,32 @@ static int json_real_equal(const json_t *real1, const json_t *real2)
+ 
+ static json_t *json_real_copy(const json_t *real)
+ {
+     return json_real(json_real_value(real));
+ }
+-
++#endif
+ 
+ /*** number ***/
+ 
+-double json_number_value(const json_t *json)
++json_int_t json_number_value(const json_t *json)
+ {
+     if(json_is_integer(json))
++      return json_integer_value(json);
++
++#ifdef SUPPORT_JANSSON_JSON_REAL
+         return (double)json_integer_value(json);
+     else if(json_is_real(json))
+         return json_real_value(json);
++#endif
++
+     else
++
++#ifdef SUPPORT_JANSSON_JSON_REAL
+         return 0.0;
++#else
++        return 0;
++#endif
+ }
+ 
+ 
+ /*** simple values ***/
+ 
+@@ -975,13 +985,17 @@ void json_delete(json_t *json)
+             json_delete_string(json_to_string(json));
+             break;
+         case JSON_INTEGER:
+             json_delete_integer(json_to_integer(json));
+             break;
++
++#ifdef SUPPORT_JANSSON_JSON_REAL
+         case JSON_REAL:
+             json_delete_real(json_to_real(json));
+             break;
++#endif
++
+         default:
+             return;
+     }
+ 
+     /* json_delete is not called for true, false or null */
+@@ -1009,12 +1023,16 @@ int json_equal(const json_t *json1, const json_t *json2)
+             return json_array_equal(json1, json2);
+         case JSON_STRING:
+             return json_string_equal(json1, json2);
+         case JSON_INTEGER:
+             return json_integer_equal(json1, json2);
++
++#ifdef SUPPORT_JANSSON_JSON_REAL
+         case JSON_REAL:
+             return json_real_equal(json1, json2);
++#endif
++
+         default:
+             return 0;
+     }
+ }
+ 
+@@ -1033,19 +1051,25 @@ json_t *json_copy(json_t *json)
+             return json_array_copy(json);
+         case JSON_STRING:
+             return json_string_copy(json);
+         case JSON_INTEGER:
+             return json_integer_copy(json);
++
++#ifdef SUPPORT_JANSSON_JSON_REAL
+         case JSON_REAL:
+             return json_real_copy(json);
++#endif
++
+         case JSON_TRUE:
+         case JSON_FALSE:
+         case JSON_NULL:
+             return json;
+         default:
+             return NULL;
+     }
++
++    return NULL;
+ }
+ 
+ json_t *json_deep_copy(const json_t *json)
+ {
+     if(!json)
+@@ -1060,15 +1084,21 @@ json_t *json_deep_copy(const json_t *json)
+                shallow copying */
+         case JSON_STRING:
+             return json_string_copy(json);
+         case JSON_INTEGER:
+             return json_integer_copy(json);
++
++#ifdef SUPPORT_JANSSON_JSON_REAL
+         case JSON_REAL:
+             return json_real_copy(json);
++#endif
++
+         case JSON_TRUE:
+         case JSON_FALSE:
+         case JSON_NULL:
+             return (json_t *)json;
+         default:
+             return NULL;
+     }
++
++    return NULL;
+ }
+-- 
+2.16.2.windows.1
+

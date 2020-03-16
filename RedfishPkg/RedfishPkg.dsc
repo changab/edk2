@@ -51,3 +51,9 @@
   UefiBootManagerLib|MdeModulePkg/Library/UefiBootManagerLib/UefiBootManagerLib.inf
   PerformanceLib|MdePkg/Library/BasePerformanceLibNull/BasePerformanceLibNull.inf
 
+  JanssonLib|RedfishPkg/Library/JanssonLib/JanssonLib.inf
+
+
+[Components]
+  RedfishPkg/Library/JanssonLib/JanssonLib.inf
+

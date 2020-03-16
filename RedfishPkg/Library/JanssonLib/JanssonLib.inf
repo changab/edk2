@@ -1,0 +1,69 @@
+## @file
+# Thirty party Jansson library for JSON operations.
+#
+# Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+# (C) Copyright 2020 Hewlett Packard Enterprise Development LP<BR>
+#
+#    SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001b
+  BASE_NAME                      = JanssonLib
+  FILE_GUID                      = F5E36815-305A-4C5A-9D75-4F2149E45255
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = JanssonLib | DXE_DRIVER DXE_RUNTIME_DRIVER UEFI_APPLICATION UEFI_DRIVER
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources]
+  JanssonCrtLibSupport.c
+  jansson/src/value.c
+  jansson/src/load.c
+  jansson/src/dump.c
+  jansson/src/hashtable_seed.c
+  jansson/src/hashtable.c
+  jansson/src/memory.c
+  jansson/src/utf.c
+  jansson/src/strbuffer.c
+  jansson/src/error.c
+  jansson/src/strconv.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  RedfishPkg/RedfishPkg.dec
+
+[LibraryClasses]
+  UefiLib
+  BaseLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  UefiRuntimeServicesTableLib
+  DebugLib
+  PrintLib
+
+[Guids]
+
+[Protocols]
+
+[BuildOptions]
+  #
+  # Disables the following Visual Studio compiler warnings
+  # so we do not break the build with /WX option:
+  #   C4090: 'function' : different 'const' qualifiers
+  #   C4244: conversion from type1 to type2, possible loss of data
+  #   C4245: conversion from type1 to type2, signed/unsigned mismatch
+  #   C4267: conversion from size_t to type, possible loss of data
+  #   C4306: 'identifier' : conversion from 'type1' to 'type2' of greater size
+  #   C4389: 'operator' : signed/unsigned mismatch (xxxx)
+  #   C4702: unreachable code
+  #   C4706: assignment within conditional expression
+  #   C4456: declaration hides previous local declaration
+  #   C4334:  32-bit shift implicitly converted to 64-bit
+  #
+  MSFT:*_*_*_CC_FLAGS   = /wd4204 /wd4702 /wd4706 /wd4244 /wd4090 /wd4456 /wd4334
