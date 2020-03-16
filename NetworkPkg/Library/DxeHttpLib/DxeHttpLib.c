@@ -3,7 +3,7 @@
   It provides the helper routines to parse the HTTP message byte stream.
 
 Copyright (c) 2015 - 2019, Intel Corporation. All rights reserved.<BR>
-(C) Copyright 2016 Hewlett Packard Enterprise Development LP<BR>
+(C) Copyright 2016 - 2020  Hewlett Packard Enterprise Development LP<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -893,6 +893,27 @@ typedef struct {
 } HTTP_BODY_PARSER;
 
 /**
+
+  Convert an Ascii char to its uppercase.
+
+  @param[in]       Char           Ascii character.
+
+  @return          Uppercase value of the input Char.
+
+**/
+CHAR8
+HttpIoCharToUpper (
+  IN      CHAR8                    Char
+  )
+{
+  if (Char >= 'a' && Char <= 'z') {
+    return  Char - ('a' - 'A');
+  }
+
+  return Char;
+}
+
+/**
   Convert an hexadecimal char to a value of type UINTN.
 
   @param[in]       Char           Ascii character.
@@ -909,7 +930,7 @@ HttpIoHexCharToUintn (
     return Char - '0';
   }
 
-  return (10 + AsciiCharToUpper (Char) - 'A');
+  return (10 + HttpIoCharToUpper (Char) - 'A');
 }
 
 /**
@@ -2082,3 +2103,234 @@ HttpIsValidHttpHeader (
   return TRUE;
 }
 
+
+/**
+  Create a HTTP_IO_HEADER to hold the HTTP header items.
+
+  @param[in]  MaxHeaderCount         The maximun number of HTTP header in this holder.
+
+  @return    A pointer of the HTTP header holder or NULL if failed.
+
+**/
+HTTP_IO_HEADER *
+HttpIoCreateHeader (
+  UINTN                     MaxHeaderCount
+  )
+{
+  HTTP_IO_HEADER        *HttpIoHeader;
+
+  if (MaxHeaderCount == 0) {
+    return NULL;
+  }
+
+  HttpIoHeader = AllocateZeroPool (sizeof (HTTP_IO_HEADER) + MaxHeaderCount * sizeof (EFI_HTTP_HEADER));
+  if (HttpIoHeader == NULL) {
+    return NULL;
+  }
+
+  HttpIoHeader->MaxHeaderCount = MaxHeaderCount;
+  HttpIoHeader->Headers = (EFI_HTTP_HEADER *) (HttpIoHeader + 1);
+
+  return HttpIoHeader;
+}
+
+/**
+  Destroy the HTTP_IO_HEADER and release the resources.
+
+  @param[in]  HttpIoHeader       Point to the HTTP header holder to be destroyed.
+
+**/
+VOID
+HttpIoFreeHeader (
+  IN  HTTP_IO_HEADER       *HttpIoHeader
+  )
+{
+  UINTN      Index;
+
+  if (HttpIoHeader != NULL) {
+    if (HttpIoHeader->HeaderCount != 0) {
+      for (Index = 0; Index < HttpIoHeader->HeaderCount; Index++) {
+        FreePool (HttpIoHeader->Headers[Index].FieldName);
+        ZeroMem (HttpIoHeader->Headers[Index].FieldValue, AsciiStrSize (HttpIoHeader->Headers[Index].FieldValue));
+        FreePool (HttpIoHeader->Headers[Index].FieldValue);
+      }
+    }
+    FreePool (HttpIoHeader);
+  }
+}
+
+
+/**
+  Set or update a HTTP header with the field name and corresponding value.
+
+  @param[in]  HttpIoHeader       Point to the HTTP header holder.
+  @param[in]  FieldName          Null terminated string which describes a field name.
+  @param[in]  FieldValue         Null terminated string which describes the corresponding field value.
+
+  @retval  EFI_SUCCESS           The HTTP header has been set or updated.
+  @retval  EFI_INVALID_PARAMETER Any input parameter is invalid.
+  @retval  EFI_OUT_OF_RESOURCES  Insufficient resource to complete the operation.
+  @retval  Other                 Unexpected error happened.
+
+**/
+EFI_STATUS
+HttpIoSetHeader (
+  IN  HTTP_IO_HEADER       *HttpIoHeader,
+  IN  CHAR8                *FieldName,
+  IN  CHAR8                *FieldValue
+  )
+{
+  EFI_HTTP_HEADER       *Header;
+  UINTN                 StrSize;
+  CHAR8                 *NewFieldValue;
+
+  if (HttpIoHeader == NULL || FieldName == NULL || FieldValue == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  Header = HttpFindHeader (HttpIoHeader->HeaderCount, HttpIoHeader->Headers, FieldName);
+  if (Header == NULL) {
+    //
+    // Add a new header.
+    //
+    if (HttpIoHeader->HeaderCount >= HttpIoHeader->MaxHeaderCount) {
+      return EFI_OUT_OF_RESOURCES;
+    }
+    Header = &HttpIoHeader->Headers[HttpIoHeader->HeaderCount];
+
+    StrSize = AsciiStrSize (FieldName);
+    Header->FieldName = AllocatePool (StrSize);
+    if (Header->FieldName == NULL) {
+      return EFI_OUT_OF_RESOURCES;
+    }
+    CopyMem (Header->FieldName, FieldName, StrSize);
+    Header->FieldName[StrSize -1] = '\0';
+
+    StrSize = AsciiStrSize (FieldValue);
+    Header->FieldValue = AllocatePool (StrSize);
+    if (Header->FieldValue == NULL) {
+      FreePool (Header->FieldName);
+      return EFI_OUT_OF_RESOURCES;
+    }
+    CopyMem (Header->FieldValue, FieldValue, StrSize);
+    Header->FieldValue[StrSize -1] = '\0';
+
+    HttpIoHeader->HeaderCount++;
+  } else {
+    //
+    // Update an existing one.
+    //
+    StrSize = AsciiStrSize (FieldValue);
+    NewFieldValue = AllocatePool (StrSize);
+    if (NewFieldValue == NULL) {
+      return EFI_OUT_OF_RESOURCES;
+    }
+    CopyMem (NewFieldValue, FieldValue, StrSize);
+    NewFieldValue[StrSize -1] = '\0';
+
+    if (Header->FieldValue != NULL) {
+      FreePool (Header->FieldValue);
+    }
+    Header->FieldValue = NewFieldValue;
+  }
+
+  return EFI_SUCCESS;
+}
+
+STATIC CONST UINT8 mB64EncTable[] =
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+/**
+  Encoding a data buffer into Base64 format.
+
+  @param[in]     Data            Pointer to the data buffer to be encoded.
+  @param[in]     DataLength      The length, in bytes, of the input data.
+  @param[out]    Result          The buffer to return the encoded Base64 contents
+                                 with Null-terminator. May be NULL in order to
+                                 determine the size buffer needed.
+  @param[in,out] ResultSize      On input, the size in bytes of the return Result
+                                 buffer. On output the size of data returned in
+                                 Result.
+
+  @retval EFI_SUCCESS            The Base64 encoding completed successfully.
+  @retval EFI_INVALID_PARAMETER  If Data or ResultSize is NULL.
+  @retval EFI_BUFFER_TOO_SMALL   The ResultSize is too small for the result.
+                                 ResultSize has been updated with the size needed
+                                 to complete the request.
+
+**/
+EFI_STATUS
+EFIAPI
+HttpBase64Encode (
+  IN      CONST VOID  *Data,
+  IN      UINTN       DataLength,
+  OUT     UINT8       *Result,
+  IN OUT  UINTN       *ResultSize
+  )
+{
+  CONST UINT8  *DataPtr;
+  UINTN        OutLength;
+  UINTN        Blocks;
+  UINT8        *DestPtr;
+  UINTN        PadCount;
+  UINTN        Index;
+
+  //
+  // Parameter Checking...
+  //
+  if ((Data == NULL) || (ResultSize == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
+  if (DataLength == 0) {
+    *ResultSize = 0;
+    return EFI_SUCCESS;
+  }
+
+  //
+  // Calculate the expected output length: 3-byte blocks to 4-byte
+  //
+  OutLength = 4 * ((DataLength + 2) / 3);
+  if ((Result == NULL) || (*ResultSize < OutLength)) {
+    //
+    // One byte for '\0'.
+    //
+    *ResultSize = OutLength + 1;
+    return EFI_BUFFER_TOO_SMALL;
+  }
+
+  DataPtr = (CONST UINT8 *)Data;
+  Blocks = (DataLength / 3) * 3;  // Amount of blocks
+  //
+  // Encoding each three ascii characters
+  //
+  for (Index = 0, DestPtr = Result; Index < Blocks; Index += 3) {
+    *DestPtr++ = mB64EncTable[  (DataPtr[Index] >> 2) & 0x3F];
+    *DestPtr++ = mB64EncTable[(((DataPtr[Index] & 0x03) << 4) +
+                               (DataPtr[Index + 1] >> 4)) & 0x3F];
+    *DestPtr++ = mB64EncTable[(((DataPtr[Index + 1] & 0x0F) << 2) +
+                               (DataPtr[Index + 2] >> 6)) & 0x3F];
+    *DestPtr++ = mB64EncTable[  (DataPtr[Index + 2]) & 0x3F];
+  }
+
+  //
+  // Encoding tail-fragment if exists
+  //
+  PadCount = DataLength % 3;
+  if (PadCount == 1) {
+    *DestPtr++ = mB64EncTable[  (DataPtr[Index] >> 2) & 0x3F];
+    *DestPtr++ = mB64EncTable[ ((DataPtr[Index] & 0x03) << 4) & 0x3F];
+    *DestPtr++ = '=';
+    *DestPtr++ = '=';
+  } else if (PadCount == 2) {
+    *DestPtr++ = mB64EncTable[  (DataPtr[Index] >> 2) & 0x3F];
+    *DestPtr++ = mB64EncTable[(((DataPtr[Index] & 0x03) << 4) +
+                               (DataPtr[Index + 1] >> 4)) & 0x3F];
+    *DestPtr++ = mB64EncTable[ ((DataPtr[Index + 1] & 0x0F) << 2) & 0x3F];
+    *DestPtr++ = '=';
+  }
+
+  *ResultSize = DestPtr - Result;
+  *DestPtr = '\0';
+
+  return EFI_SUCCESS;
+}

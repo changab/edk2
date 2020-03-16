@@ -51,6 +51,8 @@
   UefiBootManagerLib|MdeModulePkg/Library/UefiBootManagerLib/UefiBootManagerLib.inf
   PerformanceLib|MdePkg/Library/BasePerformanceLibNull/BasePerformanceLibNull.inf
 
+  HttpLib|NetworkPkg/Library/DxeHttpLib/DxeHttpLib.inf
+
   JanssonLib|RedfishPkg/Library/JanssonLib/JanssonLib.inf
   BaseJsonLib|RedfishPkg/Library/BaseJsonLib/BaseJsonLib.inf
   LibredfishLib|RedfishPkg/Library/LibredfishLib/LibredfishLib.inf
