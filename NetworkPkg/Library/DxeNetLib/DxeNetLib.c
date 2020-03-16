@@ -3392,3 +3392,27 @@ NetLibCreateDnsQName (
 
   return QueryName;
 }
+
+/**
+  This function is to convert UINTN to ASCII string with the required formatting.
+
+  @param[in]  Number         Numeric value to be converted.
+  @param[in]  Buffer         The pointer to the buffer for ASCII string.
+  @param[in]  Length         The length of the required format.
+
+**/
+VOID
+NetLibUintnToAscDecWithFormat (
+  IN UINTN                       Number,
+  IN UINT8                       *Buffer,
+  IN INTN                        Length
+  )
+{
+  UINTN                          Remainder;
+
+  for (; Length > 0; Length--) {
+    Remainder      = Number % 10;
+    Number        /= 10;
+    Buffer[Length - 1] = (UINT8) ('0' + Remainder);
+  }
+}

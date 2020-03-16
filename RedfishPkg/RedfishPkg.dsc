@@ -52,6 +52,7 @@
   PerformanceLib|MdePkg/Library/BasePerformanceLibNull/BasePerformanceLibNull.inf
 
   HttpLib|NetworkPkg/Library/DxeHttpLib/DxeHttpLib.inf
+  NetLib|NetworkPkg/Library/DxeNetLib/DxeNetLib.inf
 
   JanssonLib|RedfishPkg/Library/JanssonLib/JanssonLib.inf
   BaseJsonLib|RedfishPkg/Library/BaseJsonLib/BaseJsonLib.inf
