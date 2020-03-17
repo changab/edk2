@@ -2,8 +2,9 @@
   GUID indicates that the form set contains forms designed to be used
   for platform configuration and this form set will be displayed.
 
-Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2020, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
+
 
   @par Revision Reference:
   GUID defined in UEFI 2.1.
@@ -24,6 +25,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #define EFI_HII_REST_STYLE_FORMSET_GUID \
   { 0x790217bd, 0xbecf, 0x485b, { 0x91, 0x70, 0x5f, 0xf7, 0x11, 0x31, 0x8b, 0x27 } }
+
 
 extern EFI_GUID gEfiHiiPlatformSetupFormsetGuid;
 extern EFI_GUID gEfiHiiDriverHealthFormsetGuid;
