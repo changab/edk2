@@ -2,7 +2,7 @@
   This file defines the EFI_REDFISH_CONFIG_HANDLER_PROTOCOL interface.
 
   Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
-  (C) Copyright 2019 Hewlett Packard Enterprise Development LP<BR>
+  (C) Copyright 2020 Hewlett Packard Enterprise Development LP<BR>
 
   SPDX-License-Identifier: BSD-2-Clause-Patent
 

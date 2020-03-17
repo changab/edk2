@@ -71,6 +71,6 @@
 
   RedfishPkg/RestJsonStructureDxe/RestJsonStructureDxe.inf
   RedfishPkg/RedfishHostInterfaceDxe/RedfishHostInterfaceDxe.inf
-  RedfishPkg/RedfishRestExDxe/RedfishRestExDxe.inf
   RedfishPkg/RedfishDiscoverDxe/RedfishDiscoverDxe.inf
+  RedfishPkg/RedfishConfigDxe/RedfishConfigDxe.inf
 
