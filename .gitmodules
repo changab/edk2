@@ -17,3 +17,10 @@
 	path = BaseTools/Source/C/BrotliCompress/brotli
 	url = https://github.com/google/brotli
 	ignore = untracked
+[submodule "RedfishPkg/Library/JanssonLib/jansson"]
+	path = RedfishPkg/Library/JanssonLib/jansson
+	url = https://github.com/akheron/jansson
+[submodule "RedfishPkg/Library/LibredfishLib/libredfish"]
+	path = RedfishPkg/Library/LibredfishLib/libredfish
+	url = https://github.com/DMTF/libredfish.git
+
