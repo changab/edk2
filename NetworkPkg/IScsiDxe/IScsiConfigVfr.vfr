@@ -14,6 +14,7 @@ formset
   guid     = ISCSI_CONFIG_GUID,
   title    = STRING_TOKEN(STR_ISCSI_CONFIG_FORM_TITLE),
   help     = STRING_TOKEN(STR_ISCSI_CONFIG_FORM_HELP),
+  classguid = EFI_HII_PLATFORM_SETUP_FORMSET_GUID,
 
   varstore ISCSI_CONFIG_IFR_NVDATA,
     varid = CONFIGURATION_VARSTORE_ID,
@@ -26,7 +27,7 @@ formset
     string  varid   = ISCSI_CONFIG_IFR_NVDATA.InitiatorName,
             prompt  = STRING_TOKEN(STR_ISCSI_CONFIG_INIT_NAME),
             help    = STRING_TOKEN(STR_ISCSI_CONFIG_INIT_NAME_HELP),
-            flags   = INTERACTIVE,
+            flags   = INTERACTIVE | REST_STYLE,
             key     = KEY_INITIATOR_NAME,
             minsize = ISCSI_NAME_IFR_MIN_SIZE,
             maxsize = ISCSI_NAME_IFR_MAX_SIZE,
@@ -343,13 +344,15 @@ formset
     string  varid   = ISCSI_CONFIG_IFR_NVDATA.ISCSIMacAddr,
             prompt  = STRING_TOKEN(STR_ISCSI_MAC_PROMPT),
             help    = STRING_TOKEN(STR_ISCSI_MAC_PROMPT),
+            flags   = REST_STYLE,
             minsize = 0,
             maxsize = ISCSI_MAX_MAC_STRING_LEN,
     endstring;
 
     string  varid   = ISCSI_CONFIG_IFR_NVDATA.ISCSIAttemptOrder,
             prompt  = STRING_TOKEN(STR_ISCSI_ATTEMPT_ORDER),
-            help    = STRING_TOKEN(STR_ISCSI_ATTEMPT_ORDER),
+            help    = STRING_TOKEN(STR_ISCSI_ATTEMPT_ORDER_HELP),
+            flags   = REST_STYLE,
             minsize = 0,
             maxsize = ATTEMPT_NAME_LIST_SIZE,
     endstring;
@@ -357,6 +360,7 @@ formset
     string  varid   = ISCSI_CONFIG_IFR_NVDATA.ISCSIAddAttemptList,
             prompt  = STRING_TOKEN(STR_ISCSI_ADD_ATTEMPTS),
             help    = STRING_TOKEN(STR_ISCSI_ADD_ATTEMPTS),
+            flags   = REST_STYLE,
             minsize = 0,
             maxsize = ATTEMPT_NAME_LIST_SIZE,
     endstring;
@@ -364,6 +368,7 @@ formset
     string  varid   = ISCSI_CONFIG_IFR_NVDATA.ISCSIDeleteAttemptList,
             prompt  = STRING_TOKEN(STR_ISCSI_DELETE_ATTEMPTS),
             help    = STRING_TOKEN(STR_ISCSI_DELETE_ATTEMPTS),
+            flags   = REST_STYLE,
             minsize = 0,
             maxsize = ATTEMPT_NAME_LIST_SIZE,
     endstring;
@@ -371,7 +376,7 @@ formset
     string  varid   = ISCSI_CONFIG_IFR_NVDATA.ISCSIDisplayAttemptList,
             prompt  = STRING_TOKEN(STR_ISCSI_DISPLAY_ATTEMPTS),
             help    = STRING_TOKEN(STR_ISCSI_DISPLAY_ATTEMPTS),
-            flags   = READ_ONLY,
+            flags   = READ_ONLY | REST_STYLE,
             minsize = 0,
             maxsize = ATTEMPT_NAME_LIST_SIZE,
     endstring;

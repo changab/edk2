@@ -47,6 +47,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define HTTP_KEEP_ALIVE_PROBES       6
 #define HTTP_KEEP_ALIVE_TIME         7200
 #define HTTP_KEEP_ALIVE_INTERVAL     30
+#define HTTP_TIME_TO_GETMAP          10
 
 #define HTTP_URL_BUFFER_LEN          4096
 

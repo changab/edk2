@@ -9,6 +9,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef _ISCSI_NVDATASTRUC_H_
 #define _ISCSI_NVDATASTRUC_H_
 
+#include <Guid/HiiPlatformSetupFormset.h>
 #include <Guid/IScsiConfigHii.h>
 
 #define VAR_EQ_TEST_NAME          0x100
@@ -215,6 +216,7 @@ typedef struct _ISCSI_CONFIG_IFR_NVDATA {
   CHAR16  ISCSIAddAttemptList[ATTEMPT_NAME_LIST_SIZE];
   CHAR16  ISCSIDeleteAttemptList[ATTEMPT_NAME_LIST_SIZE];
   CHAR16  ISCSIDisplayAttemptList[ATTEMPT_NAME_LIST_SIZE];
+  
   CHAR16  ISCSIAttemptName[ATTEMPT_NAME_LIST_SIZE];
   UINT8   ISCSIBootEnableList[ISCSI_MAX_ATTEMPTS_NUM];
   UINT8   ISCSIIpAddressTypeList[ISCSI_MAX_ATTEMPTS_NUM];

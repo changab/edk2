@@ -257,9 +257,9 @@ TlsDriverEntryPoint (
 
   //
   // Create a new SSL_CTX object as framework to establish TLS/SSL enabled
-  // connections. TLS 1.0 is used as the default version.
+  // connections. TLS 1.2 is used as the default version.
   //
-  TlsService->TlsCtx = TlsCtxNew (TLS10_PROTOCOL_VERSION_MAJOR, TLS10_PROTOCOL_VERSION_MINOR);
+  TlsService->TlsCtx = TlsCtxNew (TLS12_PROTOCOL_VERSION_MAJOR, TLS12_PROTOCOL_VERSION_MINOR);
   if (TlsService->TlsCtx == NULL) {
     FreePool (TlsService);
     return EFI_ABORTED;

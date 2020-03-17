@@ -360,7 +360,7 @@ PxeBcBuildDhcp4Options (
     DEFAULT_CLASS_ID_DATA,
     sizeof (PXEBC_DHCP4_OPTION_CLID)
     );
-  PxeBcUintnToAscDecWithFormat (
+  NetLibUintnToAscDecWithFormat (
     EFI_PXE_CLIENT_SYSTEM_ARCHITECTURE,
     OptEnt.Clid->ArchitectureType,
     sizeof (OptEnt.Clid->ArchitectureType)
@@ -368,8 +368,8 @@ PxeBcBuildDhcp4Options (
 
   if (Private->Nii != NULL) {
     CopyMem (OptEnt.Clid->InterfaceName, Private->Nii->StringId, sizeof (OptEnt.Clid->InterfaceName));
-    PxeBcUintnToAscDecWithFormat (Private->Nii->MajorVer, OptEnt.Clid->UndiMajor, sizeof (OptEnt.Clid->UndiMajor));
-    PxeBcUintnToAscDecWithFormat (Private->Nii->MinorVer, OptEnt.Clid->UndiMinor, sizeof (OptEnt.Clid->UndiMinor));
+    NetLibUintnToAscDecWithFormat (Private->Nii->MajorVer, OptEnt.Clid->UndiMajor, sizeof (OptEnt.Clid->UndiMajor));
+    NetLibUintnToAscDecWithFormat (Private->Nii->MinorVer, OptEnt.Clid->UndiMinor, sizeof (OptEnt.Clid->UndiMinor));
   }
 
   Index++;

@@ -143,7 +143,7 @@ HttpBootBuildDhcp4Options (
     DEFAULT_CLASS_ID_DATA,
     sizeof (HTTP_BOOT_DHCP4_OPTION_CLID)
     );
-  HttpBootUintnToAscDecWithFormat (
+  NetLibUintnToAscDecWithFormat (
     EFI_HTTP_BOOT_CLIENT_SYSTEM_ARCHITECTURE,
     OptEnt.Clid->ArchitectureType,
     sizeof (OptEnt.Clid->ArchitectureType)
@@ -151,8 +151,8 @@ HttpBootBuildDhcp4Options (
 
   if (Private->Nii != NULL) {
     CopyMem (OptEnt.Clid->InterfaceName, Private->Nii->StringId, sizeof (OptEnt.Clid->InterfaceName));
-    HttpBootUintnToAscDecWithFormat (Private->Nii->MajorVer, OptEnt.Clid->UndiMajor, sizeof (OptEnt.Clid->UndiMajor));
-    HttpBootUintnToAscDecWithFormat (Private->Nii->MinorVer, OptEnt.Clid->UndiMinor, sizeof (OptEnt.Clid->UndiMinor));
+    NetLibUintnToAscDecWithFormat (Private->Nii->MajorVer, OptEnt.Clid->UndiMajor, sizeof (OptEnt.Clid->UndiMajor));
+    NetLibUintnToAscDecWithFormat (Private->Nii->MinorVer, OptEnt.Clid->UndiMinor, sizeof (OptEnt.Clid->UndiMinor));
   }
 
   Index++;

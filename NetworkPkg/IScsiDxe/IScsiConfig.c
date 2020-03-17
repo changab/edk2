@@ -188,8 +188,6 @@ IScsiParseIsIdFromString (
   CHAR16                         *IsIdStr;
   CHAR16                         TempStr[3];
   UINTN                          NodeVal;
-  CHAR16                         PortString[ISCSI_NAME_IFR_MAX_SIZE];
-  EFI_INPUT_KEY                  Key;
 
   if ((String == NULL) || (IsId == NULL)) {
     return EFI_INVALID_PARAMETER;
@@ -198,19 +196,7 @@ IScsiParseIsIdFromString (
   IsIdStr = (CHAR16 *) String;
 
   if (StrLen (IsIdStr) != 6 && StrLen (IsIdStr) != 12) {
-    UnicodeSPrint (
-      PortString,
-      (UINTN) ISCSI_NAME_IFR_MAX_SIZE,
-      L"Error! Only last 3 bytes are configurable, please input 6 hex numbers for last 3 bytes only or 12 hex numbers for full SSID!\n"
-      );
-
-    CreatePopUp (
-      EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-      &Key,
-      PortString,
-      NULL
-      );
-
+    DEBUG ((EFI_D_ERROR, "Error! Only last 3 bytes are configurable, please input 6 hex numbers for last 3 bytes only or 12 hex numbers for full SSID!\n"));
     return EFI_INVALID_PARAMETER;
   }
 
@@ -797,7 +783,6 @@ IScsiConvertIfrNvDataToAttemptConfigData (
   CHAR16                      IScsiMode[64];
   CHAR16                      IpMode[64];
   ISCSI_NIC_INFO              *NicInfo;
-  EFI_INPUT_KEY               Key;
   UINT8                       *AttemptConfigOrder;
   UINTN                       AttemptConfigOrderSize;
   UINT8                       *AttemptOrderTmp;
@@ -837,13 +822,7 @@ IScsiConvertIfrNvDataToAttemptConfigData (
   //
   if (IfrNvData->Enabled != ISCSI_DISABLED) {
     if (Attempt->SessionConfigData.ConnectTimeout < CONNECT_MIN_TIMEOUT) {
-      CreatePopUp (
-        EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-        &Key,
-        L"Connection Establishing Timeout is less than minimum value 100ms.",
-        NULL
-        );
-
+      DEBUG ((EFI_D_ERROR, "ERROR: Connection Establishing Timeout is less than minimum value 100ms.\n"));
       return EFI_INVALID_PARAMETER;
     }
 
@@ -858,22 +837,10 @@ IScsiConvertIfrNvDataToAttemptConfigData (
 
       if ((Gateway.Addr[0] != 0)) {
         if (SubnetMask.Addr[0] == 0) {
-          CreatePopUp (
-            EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-            &Key,
-            L"Gateway address is set but subnet mask is zero.",
-            NULL
-            );
-
+          DEBUG ((EFI_D_ERROR, "ERROR: Gateway address is set but subnet mask is zero!\n"));
           return EFI_INVALID_PARAMETER;
         } else if (!IP4_NET_EQUAL (HostIp.Addr[0], Gateway.Addr[0], SubnetMask.Addr[0])) {
-          CreatePopUp (
-            EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-            &Key,
-            L"Local IP and Gateway are not in the same subnet.",
-            NULL
-            );
-
+          DEBUG ((EFI_D_ERROR, "ERROR: Local IP and Gateway are not in the same subnet!\n"));
           return EFI_INVALID_PARAMETER;
         }
       }
@@ -884,22 +851,12 @@ IScsiConvertIfrNvDataToAttemptConfigData (
     if (!Attempt->SessionConfigData.TargetInfoFromDhcp && Attempt->SessionConfigData.IpMode < IP_MODE_AUTOCONFIG) {
       if (!Attempt->SessionConfigData.DnsMode) {
         if (!IpIsUnicast (&Attempt->SessionConfigData.TargetIp, IfrNvData->IpMode)) {
-          CreatePopUp (
-            EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-            &Key,
-            L"Target IP is invalid!",
-            NULL
-            );
+          DEBUG ((EFI_D_ERROR, "ERROR: Target IP is invalid!\n"));
           return EFI_INVALID_PARAMETER;
         }
       } else {
         if (Attempt->SessionConfigData.TargetUrl[0] == '\0') {
-          CreatePopUp (
-            EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-            &Key,
-            L"iSCSI target Url should not be NULL!",
-            NULL
-            );
+          DEBUG ((EFI_D_ERROR, "ERROR: iSCSI target Url should not be NULL!\n"));
           return EFI_INVALID_PARAMETER;
         }
       }
@@ -910,12 +867,7 @@ IScsiConvertIfrNvDataToAttemptConfigData (
       // user input the name; here we only check the case user does not input the name.
       //
       if (Attempt->SessionConfigData.TargetName[0] == '\0') {
-        CreatePopUp (
-          EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-          &Key,
-          L"iSCSI target name is NULL!",
-          NULL
-          );
+        DEBUG ((EFI_D_ERROR, "ERROR: iSCSI target name is NULL!\n"));
         return EFI_INVALID_PARAMETER;
       }
     }
@@ -925,25 +877,14 @@ IScsiConvertIfrNvDataToAttemptConfigData (
     //
     if (IfrNvData->AuthenticationType == ISCSI_AUTH_TYPE_CHAP) {
       if ((IfrNvData->CHAPName[0] == '\0') || (IfrNvData->CHAPSecret[0] == '\0')) {
-        CreatePopUp (
-          EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-          &Key,
-          L"CHAP Name or CHAP Secret is invalid!",
-          NULL
-          );
-
+        DEBUG ((EFI_D_ERROR, "ERROR: CHAP Name or CHAP Secret is invalid!\n"));
         return EFI_INVALID_PARAMETER;
       }
 
       if ((IfrNvData->CHAPType == ISCSI_CHAP_MUTUAL) &&
           ((IfrNvData->ReverseCHAPName[0] == '\0') || (IfrNvData->ReverseCHAPSecret[0] == '\0'))
           ) {
-        CreatePopUp (
-          EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-          &Key,
-          L"Reverse CHAP Name or Reverse CHAP Secret is invalid!",
-          NULL
-          );
+        DEBUG ((EFI_D_ERROR, "ERROR: Reverse CHAP Name or Reverse CHAP Secret is invalid!\n"));
         return EFI_INVALID_PARAMETER;
       }
     }
@@ -967,20 +908,7 @@ IScsiConvertIfrNvDataToAttemptConfigData (
       AsciiStrToUnicodeStrS (Attempt->AttemptName, AttemptName1, ATTEMPT_NAME_SIZE);
       AsciiStrToUnicodeStrS (SameNicAttempt->AttemptName, AttemptName2, ATTEMPT_NAME_SIZE);
 
-      UnicodeSPrint (
-        mPrivate->PortString,
-        (UINTN) ISCSI_NAME_IFR_MAX_SIZE,
-        L"Warning! Attempt \"%s\" uses same NIC as Attempt \"%s\".",
-        AttemptName1,
-        AttemptName2
-        );
-
-      CreatePopUp (
-        EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-        &Key,
-        mPrivate->PortString,
-        NULL
-        );
+      DEBUG ((EFI_D_WARN, "Warning: Attempt \"%s\" uses same NIC as Attempt \"%s\".\n", AttemptName1, AttemptName2));
 
       FreePool (AttemptName1);
       FreePool (AttemptName2);
@@ -1228,7 +1156,6 @@ IScsiConvertlfrNvDataToAttemptConfigDataByKeyword (
   EFI_IP_ADDRESS                   HostIp;
   EFI_IP_ADDRESS                   SubnetMask;
   EFI_IP_ADDRESS                   Gateway;
-  EFI_INPUT_KEY                    Key;
   UINT64                           Lun;
   EFI_STATUS                       Status;
 
@@ -1268,20 +1195,11 @@ IScsiConvertlfrNvDataToAttemptConfigDataByKeyword (
         AsciiStrToUnicodeStrS (Attempt->AttemptName, AttemptName1, ATTEMPT_NAME_SIZE);
         AsciiStrToUnicodeStrS (SameNicAttempt->AttemptName, AttemptName2, ATTEMPT_NAME_SIZE);
 
-        UnicodeSPrint (
-          mPrivate->PortString,
-          (UINTN) ISCSI_NAME_IFR_MAX_SIZE,
-          L"Warning! \"%s\" uses same NIC as Attempt \"%s\".",
+        DEBUG ((EFI_D_WARN,
+          "Warning: \"%s\" uses same NIC as Attempt \"%s\".",
           AttemptName1,
           AttemptName2
-          );
-
-        CreatePopUp (
-          EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-          &Key,
-          mPrivate->PortString,
-          NULL
-          );
+          ));
 
         FreePool (AttemptName1);
         FreePool (AttemptName2);
@@ -1370,12 +1288,7 @@ IScsiConvertlfrNvDataToAttemptConfigDataByKeyword (
     }
 
     if (IfrNvData->ISCSIConnectRetry[AttemptIndex - 1] > CONNECT_MAX_RETRY) {
-      CreatePopUp (
-          EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-          &Key,
-          L"The minimum value is 0 and the maximum is 16. 0 means no retry.",
-          NULL
-          );
+      DEBUG ((EFI_D_ERROR, "ERROR: The minimum value is 0 and the maximum is 16. 0 means no retry.\n"));
       return EFI_INVALID_PARAMETER;
     }
     Attempt->SessionConfigData.ConnectRetryCount = IfrNvData->ISCSIConnectRetry[AttemptIndex - 1];
@@ -1389,12 +1302,7 @@ IScsiConvertlfrNvDataToAttemptConfigDataByKeyword (
 
     if ((IfrNvData->ISCSIConnectTimeout[AttemptIndex - 1] < CONNECT_MIN_TIMEOUT) ||
         (IfrNvData->ISCSIConnectTimeout[AttemptIndex - 1] > CONNECT_MAX_TIMEOUT)) {
-      CreatePopUp (
-        EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-        &Key,
-        L"The minimum value is 100 milliseconds and the maximum is 20 seconds.",
-        NULL
-        );
+      DEBUG ((EFI_D_ERROR, "ERROR: The minimum value is 100 milliseconds and the maximum is 20 seconds.\n"));
       return EFI_INVALID_PARAMETER;
     }
 
@@ -1421,12 +1329,7 @@ IScsiConvertlfrNvDataToAttemptConfigDataByKeyword (
     if ((Attempt->SessionConfigData.IpMode < IP_MODE_AUTOCONFIG) && (Attempt->SessionConfigData.InitiatorInfoFromDhcp)) {
       Attempt->SessionConfigData.TargetInfoFromDhcp = IfrNvData->ISCSITargetInfoViaDHCP[AttemptIndex - 1];
     } else {
-      CreatePopUp (
-        EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-        &Key,
-        L"Invalid Configuration, Check value of IpMode or Enable DHCP!",
-        NULL
-        );
+      DEBUG ((EFI_D_ERROR, "ERROR: Invalid Configuration, Check value of IpMode or Enable DHCP!\n"));
       return EFI_INVALID_PARAMETER;
     }
 
@@ -1442,12 +1345,7 @@ IScsiConvertlfrNvDataToAttemptConfigDataByKeyword (
         Attempt->SessionConfigData.TargetPort = ISCSI_WELL_KNOWN_PORT;
       }
     } else {
-      CreatePopUp (
-        EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-        &Key,
-        L"Invalid Configuration, Check value of IpMode or Target Via DHCP!",
-        NULL
-        );
+      DEBUG ((EFI_D_ERROR, "ERROR: Invalid Configuration, Check value of IpMode or Target Via DHCP!\n"));
       return EFI_INVALID_PARAMETER;
     }
 
@@ -1491,23 +1389,13 @@ IScsiConvertlfrNvDataToAttemptConfigDataByKeyword (
         Status = NetLibStrToIp4 (IfrNvData->Keyword[Index].ISCSIInitiatorIpAddress, &HostIp.v4);
         if (EFI_ERROR (Status) || ((Attempt->SessionConfigData.SubnetMask.Addr[0] != 0) &&
              !NetIp4IsUnicast (NTOHL (HostIp.Addr[0]), NTOHL(*(UINT32*)Attempt->SessionConfigData.SubnetMask.Addr)))) {
-          CreatePopUp (
-            EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-            &Key,
-            L"Invalid IP address!",
-            NULL
-            );
+          DEBUG ((EFI_D_ERROR, "ERROR: Invalid IP address!\n"));
           return EFI_INVALID_PARAMETER;
         } else {
           CopyMem (&Attempt->SessionConfigData.LocalIp, &HostIp.v4, sizeof (HostIp.v4));
         }
       } else {
-        CreatePopUp (
-          EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-          &Key,
-          L"Invalid Configuration, Check value of IpMode or Enable DHCP!",
-          NULL
-          );
+        DEBUG ((EFI_D_ERROR, "ERROR: Invalid Configuration, Check value of IpMode or Enable DHCP!\n"));
         return EFI_INVALID_PARAMETER;
       }
 
@@ -1515,23 +1403,13 @@ IScsiConvertlfrNvDataToAttemptConfigDataByKeyword (
       if ((Attempt->SessionConfigData.IpMode == IP_MODE_IP4) && (!Attempt->SessionConfigData.InitiatorInfoFromDhcp)) {
         Status = NetLibStrToIp4 (IfrNvData->Keyword[Index].ISCSIInitiatorNetmask, &SubnetMask.v4);
         if (EFI_ERROR (Status) || ((SubnetMask.Addr[0] != 0) && (IScsiGetSubnetMaskPrefixLength (&SubnetMask.v4) == 0))) {
-          CreatePopUp (
-            EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-            &Key,
-            L"Invalid Subnet Mask!",
-            NULL
-            );
+          DEBUG ((EFI_D_ERROR, "ERROR: Invalid Subnet Mask!\n"));
           return EFI_INVALID_PARAMETER;
         } else {
           CopyMem (&Attempt->SessionConfigData.SubnetMask, &SubnetMask.v4, sizeof (SubnetMask.v4));
         }
       } else {
-        CreatePopUp (
-          EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-          &Key,
-          L"Invalid Configuration, Check value of IpMode or Enable DHCP!",
-          NULL
-          );
+        DEBUG ((EFI_D_ERROR, "ERROR: Invalid Configuration, Check value of IpMode or Enable DHCP!\n"));
         return EFI_INVALID_PARAMETER;
       }
 
@@ -1541,23 +1419,13 @@ IScsiConvertlfrNvDataToAttemptConfigDataByKeyword (
         if (EFI_ERROR (Status) ||
           ((Gateway.Addr[0] != 0) && (Attempt->SessionConfigData.SubnetMask.Addr[0] != 0) &&
              !NetIp4IsUnicast (NTOHL (Gateway.Addr[0]), NTOHL(*(UINT32*)Attempt->SessionConfigData.SubnetMask.Addr)))) {
-          CreatePopUp (
-            EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-            &Key,
-            L"Invalid Gateway!",
-            NULL
-            );
+          DEBUG ((EFI_D_ERROR, "ERROR: Invalid Gateway!\n"));
           return EFI_INVALID_PARAMETER;
         } else {
           CopyMem (&Attempt->SessionConfigData.Gateway, &Gateway.v4, sizeof (Gateway.v4));
         }
       } else {
-        CreatePopUp (
-          EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-          &Key,
-          L"Invalid Configuration, Check value of IpMode or Enable DHCP!",
-          NULL
-          );
+        DEBUG ((EFI_D_ERROR, "ERROR: Invalid Configuration, Check value of IpMode or Enable DHCP!\n"));
         return EFI_INVALID_PARAMETER;
       }
 
@@ -1566,33 +1434,18 @@ IScsiConvertlfrNvDataToAttemptConfigDataByKeyword (
         UnicodeStrToAsciiStrS (IfrNvData->Keyword[Index].ISCSITargetName, IScsiName, ISCSI_NAME_MAX_SIZE);
         Status = IScsiNormalizeName (IScsiName, AsciiStrLen (IScsiName));
         if (EFI_ERROR (Status)) {
-          CreatePopUp (
-            EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-            &Key,
-            L"Invalid iSCSI Name!",
-            NULL
-            );
+          DEBUG ((EFI_D_ERROR, "ERROR: Invalid iSCSI Name!\n"));
         } else {
           AsciiStrCpyS (Attempt->SessionConfigData.TargetName, ISCSI_NAME_MAX_SIZE, IScsiName);
         }
         if (Attempt->SessionConfigData.Enabled != ISCSI_DISABLED) {
           if (Attempt->SessionConfigData.TargetName[0] == L'\0') {
-            CreatePopUp (
-              EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-              &Key,
-              L"iSCSI target name is NULL!",
-              NULL
-              );
+            DEBUG ((EFI_D_ERROR, "ERROR: iSCSI target name is NULL!\n"));
             return EFI_INVALID_PARAMETER;
           }
         }
       } else {
-        CreatePopUp (
-          EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-          &Key,
-          L"Invalid Configuration, Check value of IpMode or Target Via DHCP!",
-          NULL
-          );
+        DEBUG ((EFI_D_ERROR, "ERROR: Invalid Configuration, Check value of IpMode or Target Via DHCP!\n"));
         return EFI_INVALID_PARAMETER;
       }
 
@@ -1609,12 +1462,7 @@ IScsiConvertlfrNvDataToAttemptConfigDataByKeyword (
           CopyMem (&Attempt->SessionConfigData.TargetIp, &HostIp, sizeof (HostIp));
         }
       } else {
-        CreatePopUp (
-          EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-          &Key,
-          L"Invalid Configuration, Check value of IpMode or Target Via DHCP!",
-          NULL
-          );
+        DEBUG ((EFI_D_ERROR, "ERROR: Invalid Configuration, Check value of IpMode or Target Via DHCP!\n"));
         return EFI_INVALID_PARAMETER;
       }
 
@@ -1626,22 +1474,12 @@ IScsiConvertlfrNvDataToAttemptConfigDataByKeyword (
         UnicodeStrToAsciiStrS (IfrNvData->Keyword[Index].ISCSILun, LunString, ISCSI_LUN_STR_MAX_LEN);
         Status = IScsiAsciiStrToLun (LunString, (UINT8 *) &Lun);
         if (EFI_ERROR (Status)) {
-          CreatePopUp (
-            EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-            &Key,
-            L"Invalid LUN string, Examples are: 4752-3A4F-6b7e-2F99, 6734-9-156f-127, 4186-9!",
-            NULL
-            );
+          DEBUG ((EFI_D_ERROR, "ERROR: Invalid LUN string, Examples are: 4752-3A4F-6b7e-2F99, 6734-9-156f-127, 4186-9!\n"));
         } else {
           CopyMem (&Attempt->SessionConfigData.BootLun, &Lun, sizeof (Lun));
         }
       } else {
-        CreatePopUp (
-          EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-          &Key,
-          L"Invalid Configuration, Check value of IpMode or Target Via DHCP!",
-          NULL
-          );
+        DEBUG ((EFI_D_ERROR, "ERROR: Invalid Configuration, Check value of IpMode or Target Via DHCP!\n"));
         return EFI_INVALID_PARAMETER;
       }
 
@@ -1655,22 +1493,12 @@ IScsiConvertlfrNvDataToAttemptConfigDataByKeyword (
 
         if (Attempt->SessionConfigData.Enabled != ISCSI_DISABLED) {
           if (IfrNvData->Keyword[Index].ISCSIChapUsername[0] == L'\0') {
-            CreatePopUp (
-              EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-              &Key,
-              L"CHAP Name is invalid!",
-              NULL
-              );
+            DEBUG ((EFI_D_ERROR, "ERROR: CHAP Name is invalid!\n"));
             return EFI_INVALID_PARAMETER;
           }
         }
       } else {
-        CreatePopUp (
-          EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-          &Key,
-          L"Invalid Configuration, Check value of AuthenticationType!",
-          NULL
-          );
+        DEBUG ((EFI_D_ERROR, "ERROR: Invalid Configuration, Check value of AuthenticationType!\n"));
         return EFI_INVALID_PARAMETER;
       }
 
@@ -1685,22 +1513,12 @@ IScsiConvertlfrNvDataToAttemptConfigDataByKeyword (
 
         if (Attempt->SessionConfigData.Enabled != ISCSI_DISABLED) {
           if ((ChapSecretLen < ISCSI_CHAP_SECRET_MIN_LEN) || (ChapSecretLen > ISCSI_CHAP_SECRET_MAX_LEN)) {
-            CreatePopUp (
-              EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-              &Key,
-              L"The Chap Secret minimum length is 12 bytes and the maximum length is 16 bytes.",
-              NULL
-              );
+            DEBUG ((EFI_D_ERROR, "ERROR: The Chap Secret minimum length is 12 bytes and the maximum length is 16 bytes.!\n"));
             return EFI_INVALID_PARAMETER;
           }
         }
       } else {
-        CreatePopUp (
-          EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-          &Key,
-          L"Invalid Configuration, Check value of AuthenticationType!",
-          NULL
-          );
+        DEBUG ((EFI_D_ERROR, "ERROR: Invalid Configuration, Check value of AuthenticationType!\n"));
         return EFI_INVALID_PARAMETER;
       }
 
@@ -1713,22 +1531,12 @@ IScsiConvertlfrNvDataToAttemptConfigDataByKeyword (
           );
         if (Attempt->SessionConfigData.Enabled != ISCSI_DISABLED) {
           if (IfrNvData->Keyword[Index].ISCSIReverseChapUsername[0] == L'\0') {
-            CreatePopUp (
-              EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-              &Key,
-              L"Reverse CHAP Name is invalid!",
-              NULL
-              );
+            DEBUG ((EFI_D_ERROR, "ERROR: Reverse CHAP Name is invalid!\n"));
             return EFI_INVALID_PARAMETER;
           }
         }
       } else {
-        CreatePopUp (
-          EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-          &Key,
-          L"Invalid Configuration, Check value of AuthenticationType or Chap Type!",
-          NULL
-          );
+        DEBUG ((EFI_D_ERROR, "ERROR: Invalid Configuration, Check value of AuthenticationType or Chap Type!\n"));
         return EFI_INVALID_PARAMETER;
       }
 
@@ -1743,22 +1551,12 @@ IScsiConvertlfrNvDataToAttemptConfigDataByKeyword (
 
         if (Attempt->SessionConfigData.Enabled != ISCSI_DISABLED) {
           if ((ReverseChapSecretLen < ISCSI_CHAP_SECRET_MIN_LEN) || (ReverseChapSecretLen > ISCSI_CHAP_SECRET_MAX_LEN)) {
-            CreatePopUp (
-              EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-              &Key,
-              L"The Reverse CHAP Secret minimum length is 12 bytes and the maximum length is 16 bytes.",
-              NULL
-              );
+            DEBUG ((EFI_D_ERROR, "ERROR: The Reverse CHAP Secret minimum length is 12 bytes and the maximum length is 16 bytes.\n"));
             return EFI_INVALID_PARAMETER;
           }
         }
       } else {
-        CreatePopUp (
-          EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-          &Key,
-          L"Invalid Configuration, Check value of AuthenticationType or Chap Type!",
-          NULL
-          );
+        DEBUG ((EFI_D_ERROR, "ERROR: Invalid Configuration, Check value of AuthenticationType or Chap Type!\n"));
         return EFI_INVALID_PARAMETER;
       }
     }
@@ -2742,7 +2540,6 @@ IScsiConfigProcessDefault (
   UINT8                       *AttemptConfigOrder;
   UINTN                       AttemptConfigOrderSize;
   UINTN                       Index;
-  EFI_INPUT_KEY               Key;
 
   AttemptConfigData = NULL;
   //
@@ -2814,12 +2611,7 @@ IScsiConfigProcessDefault (
     }
 
     if (Index > PcdGet8 (PcdMaxIScsiAttemptNumber)) {
-      CreatePopUp (
-        EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-        &Key,
-        L"Can not create more attempts, Please configure the PcdMaxIScsiAttemptNumber if needed!",
-        NULL
-        );
+      DEBUG ((EFI_D_ERROR, "ERROR: Can not create more attempts, Please configure the PcdMaxIScsiAttemptNumber if needed!\n"));
       return EFI_UNSUPPORTED;
     }
 
@@ -3155,7 +2947,6 @@ IScsiFormRouteConfig (
   LIST_ENTRY                       *Entry;
   LIST_ENTRY                       *NextEntry;
   ISCSI_NIC_INFO                   *NicInfo;
-  EFI_INPUT_KEY                    Key;
   CHAR16                           MacString[ISCSI_MAX_MAC_STRING_LEN];
   CHAR8                            *InitiatorName;
   UINT8                            *AttemptList;
@@ -3216,12 +3007,7 @@ IScsiFormRouteConfig (
 
     Status      = gIScsiInitiatorName.Set (&gIScsiInitiatorName, &BufferSize, InitiatorName);
     if (EFI_ERROR (Status)) {
-      CreatePopUp (
-        EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-        &Key,
-        L"Invalid iSCSI Name!",
-        NULL
-        );
+      DEBUG ((EFI_D_ERROR, "ERROR: Invalid iSCSI Name!\n"));
       goto Exit;
     }
   } else {
@@ -3233,13 +3019,7 @@ IScsiFormRouteConfig (
     if (OffSet >= ATTEMPT_MAC_ADDR_VAR_OFFSET) {
       Status = gIScsiInitiatorName.Get (&gIScsiInitiatorName, &BufferSize, InitiatorName);
       if (EFI_ERROR (Status)) {
-        CreatePopUp (
-          EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-          &Key,
-          L"Error: please configure iSCSI initiator name first!",
-          NULL
-          );
-        goto Exit;
+        DEBUG ((EFI_D_WARN, "iSCSI initiator name not configured!"));
       }
     } else {
       goto Exit;
@@ -3248,12 +3028,7 @@ IScsiFormRouteConfig (
     if (IfrNvData->ISCSIAddAttemptList[0] != L'\0') {
       Status =IScsiGetAttemptIndexList (IfrNvData->ISCSIAddAttemptList, IfrNvData->AddAttemptList, TRUE);
       if (EFI_ERROR (Status)) {
-          CreatePopUp (
-            EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-            &Key,
-            L"Error: The add attempt list is invalid",
-            NULL
-            );
+        DEBUG ((EFI_D_ERROR, "ERROR: The add attempt list is invalid!\n"));
         goto Exit;
       }
 
@@ -3270,12 +3045,7 @@ IScsiFormRouteConfig (
       }
       Status = IScsiGetAttemptIndexList (IfrNvData->ISCSIDeleteAttemptList, AttemptList, FALSE);
       if (EFI_ERROR (Status)) {
-          CreatePopUp (
-            EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-            &Key,
-            L"Error: The delete attempt list is invalid",
-            NULL
-            );
+        DEBUG ((EFI_D_ERROR, "ERROR: The delete attempt list is invalid!\n"));
         goto Exit;
       }
 
@@ -3305,12 +3075,7 @@ IScsiFormRouteConfig (
     } else if (IfrNvData->ISCSIAttemptOrder[0] != L'\0') {
       Status = IScsiGetAttemptIndexList (IfrNvData->ISCSIAttemptOrder, IfrNvData->DynamicOrderedList, FALSE);
       if (EFI_ERROR (Status)) {
-          CreatePopUp (
-            EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-            &Key,
-            L"Error: The new attempt order list is invalid",
-            NULL
-            );
+        DEBUG ((EFI_D_ERROR, "ERROR: The new attempt order list is invalid!\n"));
         goto Exit;
       }
 
@@ -3514,14 +3279,9 @@ IScsiFormCallback (
       UnicodeStrToAsciiStrS (IfrNvData->InitiatorName, IScsiName, ISCSI_NAME_MAX_SIZE);
       BufferSize  = AsciiStrSize (IScsiName);
 
-      Status      = gIScsiInitiatorName.Set (&gIScsiInitiatorName, &BufferSize, IScsiName);
+      Status = gIScsiInitiatorName.Set (&gIScsiInitiatorName, &BufferSize, IScsiName);
       if (EFI_ERROR (Status)) {
-        CreatePopUp (
-          EFI_LIGHTGRAY | EFI_BACKGROUND_BLUE,
-          &Key,
-          L"Invalid iSCSI Name!",
-          NULL
-          );
+        DEBUG ((EFI_D_ERROR, "ERROR: Invalid iSCSI Name!\n"));
       }
 
       *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_APPLY;

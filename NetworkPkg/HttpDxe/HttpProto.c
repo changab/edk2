@@ -1048,6 +1048,51 @@ HttpCloseConnection (
   return EFI_SUCCESS;
 }
 
+BOOLEAN
+HttpTcp4GetMapping (
+  IN EFI_TCP4_PROTOCOL     *Tcp4,
+  IN EFI_TCP4_CONFIG_DATA  *Tcp4CfgData
+  )
+{
+  EFI_STATUS           Status;
+  EFI_EVENT            TimeoutEvent;
+  EFI_IP4_MODE_DATA    Ip4ModeData;
+  BOOLEAN              IsMapDone;
+
+  IsMapDone = FALSE;
+
+  ZeroMem (&Ip4ModeData, sizeof (EFI_IP4_MODE_DATA));
+
+  Status = gBS->CreateEvent (EVT_TIMER, TPL_CALLBACK, NULL, NULL, &TimeoutEvent);
+  if (EFI_ERROR (Status)) {
+    return IsMapDone;
+  }
+
+  //
+  // Start the timer, it will timeout after 10 seconds.
+  //
+  gBS->SetTimer (TimeoutEvent, TimerRelative, HTTP_TIME_TO_GETMAP * TICKS_PER_SECOND);
+
+  while (EFI_ERROR (gBS->CheckEvent (TimeoutEvent))) {
+    Tcp4->Poll (Tcp4);
+
+    if (!EFI_ERROR (Tcp4->GetModeData (Tcp4, NULL, NULL, &Ip4ModeData, NULL, NULL)) &&
+        Ip4ModeData.IsConfigured) {
+      Tcp4->Configure (Tcp4, NULL);
+      IsMapDone = (BOOLEAN) (Tcp4->Configure (Tcp4, Tcp4CfgData) == EFI_SUCCESS);
+      break;
+    }
+  }
+
+  if (!IsMapDone) {
+    DEBUG ((EFI_D_ERROR, "HttpTcp4GetMapping timeout!\n"));
+  }
+
+  gBS->CloseEvent (TimeoutEvent);
+
+  return IsMapDone;
+}
+
 /**
   Configure TCP4 protocol child.
 
@@ -1106,8 +1151,10 @@ HttpConfigureTcp4 (
 
   Status = HttpInstance->Tcp4->Configure (HttpInstance->Tcp4, Tcp4CfgData);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "HttpConfigureTcp4 - %r\n", Status));
-    return Status;
+    if ((Status != EFI_NO_MAPPING) || ((Status == EFI_NO_MAPPING) && !HttpTcp4GetMapping (HttpInstance->Tcp4, Tcp4CfgData))) {
+      DEBUG ((EFI_D_ERROR, "HttpConfigureTcp4 - %r\n", Status));
+      return Status;
+    }
   }
 
   Status = HttpCreateTcpConnCloseEvent (HttpInstance);

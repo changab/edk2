@@ -425,22 +425,6 @@ PxeBcShowIp6Addr (
 
 
 /**
-  This function is to convert UINTN to ASCII string with required format.
-
-  @param[in]  Number         Numeric value to be converted.
-  @param[in]  Buffer         Pointer to the buffer for ASCII string.
-  @param[in]  Length         Length of the required format.
-
-**/
-VOID
-PxeBcUintnToAscDecWithFormat (
-  IN UINTN                       Number,
-  IN UINT8                       *Buffer,
-  IN INTN                        Length
-  );
-
-
-/**
   This function is to convert a UINTN to a ASCII string, and return the
   actual length of the buffer.
 

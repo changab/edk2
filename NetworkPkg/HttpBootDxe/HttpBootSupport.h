@@ -38,22 +38,6 @@ HttpBootGetNicByIp6Children (
   );
 
 /**
-  This function is to convert UINTN to ASCII string with the required formatting.
-
-  @param[in]  Number         Numeric value to be converted.
-  @param[in]  Buffer         The pointer to the buffer for ASCII string.
-  @param[in]  Length         The length of the required format.
-
-**/
-VOID
-HttpBootUintnToAscDecWithFormat (
-  IN UINTN                       Number,
-  IN UINT8                       *Buffer,
-  IN INTN                        Length
-  );
-
-
-/**
   This function is to display the IPv4 address.
 
   @param[in]  Ip        The pointer to the IPv4 address.

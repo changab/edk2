@@ -790,13 +790,15 @@ TcpInput (
     Checksum = NetIp6PseudoHeadChecksum (&Src->v6, &Dst->v6, 6, 0);
   }
 
+  /*
   Checksum = TcpChecksum (Nbuf, Checksum);
 
   if (Checksum != 0) {
     DEBUG ((EFI_D_ERROR, "TcpInput: received a checksum error packet\n"));
     goto DISCARD;
   }
-
+  */
+  
   if (TCP_FLG_ON (Head->Flag, TCP_FLG_SYN)) {
     Len++;
   }
