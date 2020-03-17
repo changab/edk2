@@ -58,11 +58,14 @@
   BaseJsonLib|RedfishPkg/Library/BaseJsonLib/BaseJsonLib.inf
   LibredfishLib|RedfishPkg/Library/LibredfishLib/LibredfishLib.inf
   RedfishLib|RedfishPkg/Library/DxeRedfishLib/DxeRedfishLib.inf
+  RedfishPlatformHostInterfaceLib|RedfishPkg/Library/PlatformHostInterfaceLibNull/PlatformHostInterfaceLibNull.inf
 
 [Components]
   RedfishPkg/Library/JanssonLib/JanssonLib.inf
   RedfishPkg/Library/BaseJsonLib/BaseJsonLib.inf
   RedfishPkg/Library/LibredfishLib/LibredfishLib.inf
   RedfishPkg/Library/DxeRedfishLib/DxeRedfishLib.inf
+  RedfishPkg/Library/PlatformHostInterfaceLibNull/PlatformHostInterfaceLibNull.inf
 
   RedfishPkg/RestJsonStructureDxe/RestJsonStructureDxe.inf
+  RedfishPkg/RedfishHostInterfaceDxe/RedfishHostInterfaceDxe.inf
