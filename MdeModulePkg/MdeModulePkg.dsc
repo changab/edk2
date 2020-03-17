@@ -1,7 +1,7 @@
 ## @file
 # EFI/PI Reference Module Package for All Architectures
 #
-# (C) Copyright 2014 Hewlett-Packard Development Company, L.P.<BR>
+# (C) Copyright 2014 - 2020 Hewlett-Packard Development Company, L.P.<BR>
 # Copyright (c) 2007 - 2019, Intel Corporation. All rights reserved.<BR>
 #
 #    SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -63,6 +63,7 @@
   #
   UefiUsbLib|MdePkg/Library/UefiUsbLib/UefiUsbLib.inf
   UefiScsiLib|MdePkg/Library/UefiScsiLib/UefiScsiLib.inf
+  RestExLib|MdeModulePkg/Library/DxeRestExLib/DxeRestExLib.inf
   SecurityManagementLib|MdeModulePkg/Library/DxeSecurityManagementLib/DxeSecurityManagementLib.inf
   TimerLib|MdePkg/Library/BaseTimerLibNullTemplate/BaseTimerLibNullTemplate.inf
   SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
