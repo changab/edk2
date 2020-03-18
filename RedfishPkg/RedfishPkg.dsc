@@ -61,6 +61,7 @@
   LibredfishLib|RedfishPkg/Library/LibredfishLib/LibredfishLib.inf
   RedfishLib|RedfishPkg/Library/DxeRedfishLib/DxeRedfishLib.inf
   RedfishPlatformHostInterfaceLib|RedfishPkg/Library/PlatformHostInterfaceLibNull/PlatformHostInterfaceLibNull.inf
+  RedfishPlatformCredentialLib|RedfishPkg/Library/PlatformCredentialLibNull/PlatformCredentialLibNull.inf
 
 [LibraryClasses.common]
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
@@ -71,12 +72,13 @@
   RedfishPkg/Library/LibredfishLib/LibredfishLib.inf
   RedfishPkg/Library/DxeRedfishLib/DxeRedfishLib.inf
   RedfishPkg/Library/PlatformHostInterfaceLibNull/PlatformHostInterfaceLibNull.inf
+  RedfishPkg/Library/PlatformCredentialLibNull/PlatformCredentialLibNull.inf
 
   RedfishPkg/RestJsonStructureDxe/RestJsonStructureDxe.inf
   RedfishPkg/RedfishHostInterfaceDxe/RedfishHostInterfaceDxe.inf
+  RedfishPkg/RedfishRestExDxe/RedfishRestExDxe.inf
   RedfishPkg/RedfishDiscoverDxe/RedfishDiscoverDxe.inf
   RedfishPkg/RedfishConfigDxe/RedfishConfigDxe.inf
   RedfishPkg/Features/RedfishBootInfoDxe/RedfishBootInfoDxe.inf
   RedfishPkg/Features/RedfishBiosDxe/RedfishBiosDxe.inf
-
-
+  RedfishPkg/RedfishCredentialDxe/RedfishCredentialDxe.inf

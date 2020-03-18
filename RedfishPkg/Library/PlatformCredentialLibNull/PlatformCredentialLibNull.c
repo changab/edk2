@@ -1,40 +1,43 @@
 /** @file
-  This file defines the EFI_REDFISH_CREDENTIAL_PROTOCOL interface.
+  NULL instace of RedfishPlatformCredentialLib
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
-  (C) Copyright 2020 Hewlett Packard Enterprise Development LP<BR>
+  (C) Copyright 2019 Hewlett Packard Enterprise Development LP<BR>
 
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
-
 **/
+#include <Uefi.h>
+#include <Library/BaseLib.h>
+#include <Library/UefiLib.h>
 
-#ifndef EFI_REDFISH_CREDENTIAL_H_
-#define EFI_REDFISH_CREDENTIAL_H_
+#include <Protocol/RedfishCredential.h>
+/**
+  Notification of Exit Boot Service.
 
-typedef struct _EFI_REDFISH_CREDENTIAL_PROTOCOL EFI_REDFISH_CREDENTIAL_PROTOCOL;
+  @param[in]  This    Pointer to EFI_REDFISH_CREDENTIAL_PROTOCOL.
+**/
+VOID
+EFIAPI
+LibCredentialExitBootServicesNotify (
+  IN  EFI_REDFISH_CREDENTIAL_PROTOCOL  *This
+)
+{
+  return;
+}
 
-#define EFI_REDFISH_CREDENTIAL_PROTOCOL_GUID \
-    {  \
-      0x8804377, 0xaf7a, 0x4496, { 0x8a, 0x7b, 0x17, 0x59, 0x0, 0xe9, 0xab, 0x46 }  \
-    }
+/**
+  Notification of End of DXe.
 
-typedef enum {
-  AuthMethodNone,            ///< No authentication is required.
-  AuthMethodHttpBasic,       ///< Basic authentication is required.
-  AuthMethodRedfishSession,  ///< Session authentication is required.
-  AuthMethodMax
-} EFI_REDFISH_AUTH_METHOD;
-
-typedef enum {
-  ServiceStopTypeNone = 0,            ///< Stop Redfsih service without reason.
-  ServiceStopTypeSecureBootDisabled,  ///< Stop Redfsih service becasue EFI
-                                      ///< Secure Boot is disabled.
-  ServiceStopTypeExitBootService,     ///< Stop Redfsih service becasue existing
-                                      ///< Boot Service.
-  ServiceStopTypeMax
-} EFI_REDFISH_CREDENTIAL_STOP_SERVICE_TYPE;
-
+  @param[in]  This    Pointer to EFI_REDFISH_CREDENTIAL_PROTOCOL.
+**/
+VOID
+EFIAPI
+LibCredentialEndOfDxeNotify (
+  IN  EFI_REDFISH_CREDENTIAL_PROTOCOL  *This
+)
+{
+  return;
+}
 
 /**
   Retrieve platform's Redfish authentication information.
@@ -60,14 +63,17 @@ typedef enum {
   @retval EFI_UNSUPPORTED          Unsupported authentication method is found.
 
 **/
-typedef
 EFI_STATUS
-(EFIAPI *EFI_REDFISH_CREDENTIAL_PROTOCOL_GET_AUTH_INFO) (
+EFIAPI
+LibCredentialGetAuthInfo (
   IN  EFI_REDFISH_CREDENTIAL_PROTOCOL    *This,
   OUT EFI_REDFISH_AUTH_METHOD            *AuthMethod,
   OUT CHAR8                              **UserId,
   OUT CHAR8                              **Password
-  );
+)
+{
+  return EFI_UNSUPPORTED;
+}
 
 /**
   Notify the Redfish service provide to stop provide configuration service to this platform.
@@ -81,22 +87,18 @@ EFI_STATUS
   @param[in]   ServiceStopType     Reason of stopping Redfish service.
 
   @retval EFI_SUCCESS              Service has been stoped successfully.
-  @retval EFI_INVALID_PARAMETER    This is NULL.
+  @retval EFI_INVALID_PARAMETER    This is NULL or given the worng ServiceStopType.
+  @retval EFI_UNSUPPORTED          Not support to stop Redfish service.
   @retval Others                   Some error happened.
 
 **/
-typedef
 EFI_STATUS
-(EFIAPI *EFI_REDFISH_CREDENTIAL_PROTOCOL_STOP_SERVICE) (
-  IN     EFI_REDFISH_CREDENTIAL_PROTOCOL            *This,
-  IN     EFI_REDFISH_CREDENTIAL_STOP_SERVICE_TYPE   ServiceStopType
-  );
+EFIAPI
+LibStopRedfishService (
+  IN     EFI_REDFISH_CREDENTIAL_PROTOCOL    *This,
+  IN     EFI_REDFISH_CREDENTIAL_STOP_SERVICE_TYPE ServiceStopType
+  )
+{
+  return EFI_UNSUPPORTED;
+}
 
-struct _EFI_REDFISH_CREDENTIAL_PROTOCOL {
-  EFI_REDFISH_CREDENTIAL_PROTOCOL_GET_AUTH_INFO      GetAuthInfo;
-  EFI_REDFISH_CREDENTIAL_PROTOCOL_STOP_SERVICE       StopService;
-};
-
-extern EFI_GUID gEfiRedfishCredentialProtocolGuid;
-
-#endif
