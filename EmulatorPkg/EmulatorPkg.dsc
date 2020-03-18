@@ -34,6 +34,11 @@
   DEFINE NETWORK_ISCSI_ENABLE     = FALSE
   DEFINE SECURE_BOOT_ENABLE       = FALSE
 
+  #
+  # Redfish definition
+  #
+  DEFINE REDFISH_ENABLE = FALSE
+
 [SkuIds]
   0|DEFAULT
 
