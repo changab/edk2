@@ -62,6 +62,9 @@
   RedfishLib|RedfishPkg/Library/DxeRedfishLib/DxeRedfishLib.inf
   RedfishPlatformHostInterfaceLib|RedfishPkg/Library/PlatformHostInterfaceLibNull/PlatformHostInterfaceLibNull.inf
 
+[LibraryClasses.common]
+  HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
+
 [Components]
   RedfishPkg/Library/JanssonLib/JanssonLib.inf
   RedfishPkg/Library/BaseJsonLib/BaseJsonLib.inf
@@ -73,4 +76,5 @@
   RedfishPkg/RedfishHostInterfaceDxe/RedfishHostInterfaceDxe.inf
   RedfishPkg/RedfishDiscoverDxe/RedfishDiscoverDxe.inf
   RedfishPkg/RedfishConfigDxe/RedfishConfigDxe.inf
+  RedfishPkg/Features/RedfishBootInfoDxe/RedfishBootInfoDxe.inf
 

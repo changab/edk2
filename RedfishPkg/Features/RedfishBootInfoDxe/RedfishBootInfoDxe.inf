@@ -1,0 +1,69 @@
+## @file
+#  RedfishBootInfoDxe Description File.
+#
+#  Support BootOrder/BootOptions/BootNext configuration via Redfish schema.
+#
+#  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution. The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php.
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+##
+[Defines]
+  INF_VERSION               = 0x0001001b
+  BASE_NAME                 = RedfishBootInfoDxe
+  FILE_GUID                 = 5760D3B4-0EA8-4827-BF98-B52F74C1397E
+  MODULE_TYPE               = UEFI_DRIVER
+  VERSION_STRING            = 1.0
+  ENTRY_POINT               = RedfishBootInfoEntryPoint
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  RedfishPkg/RedfishPkg.dec
+
+[Sources]
+  RedfishBootInfoDxe.h
+  RedfishBootInfoDxe.c
+
+[LibraryClasses]
+  UefiLib
+  DebugLib
+  PrintLib
+  DevicePathLib
+  RedfishLib
+  UefiBootManagerLib
+  BaseJsonLib
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+
+[Protocols]
+  gEfiRedfishConfigHandlerProtocolGuid
+  gEfiRedfishPlatformBiosResourceProtocolGuid   ## CONSUMES
+
+[Guids]
+  gEfiEventReadyToBootGuid
+  gEfiGlobalVariableGuid
+
+[Pcd]
+
+[BuildOptions]
+  #
+  # Disables the following Visual Studio compiler warnings
+  # so we do not break the build with /WX option:
+  #   C4090: 'function' : different 'const' qualifiers
+  #   C4244: conversion from type1 to type2, possible loss of data
+  #   C4245: conversion from type1 to type2, signed/unsigned mismatch
+  #   C4267: conversion from size_t to type, possible loss of data
+  #   C4306: 'identifier' : conversion from 'type1' to 'type2' of greater size
+  #   C4389: 'operator' : signed/unsigned mismatch (xxxx)
+  #   C4702: unreachable code
+  #   C4706: assignment within conditional expression
+  #
+  MSFT:*_*_*_CC_FLAGS   = /wd4204 /wd4702 /wd4706
