@@ -345,10 +345,10 @@ BootOptionPriority (
   //
   // Make sure Shell is first
   //
-  if (StrCmp (BootOption->Description, L"UEFI Shell") == 0) {
+  //if (StrCmp (BootOption->Description, L"UEFI Shell") == 0) {
     return 0;
-  }
-  return 100;
+  //}
+  //return 100;
 }
 
 INTN
