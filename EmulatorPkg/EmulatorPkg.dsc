@@ -27,17 +27,18 @@
   #
   # Network definition
   #
-  DEFINE NETWORK_SNP_ENABLE       = FALSE
-  DEFINE NETWORK_IP6_ENABLE       = FALSE
-  DEFINE NETWORK_TLS_ENABLE       = FALSE
+  #DEFINE NETWORK_SNP_ENABLE       = TRUE
+  #DEFINE NETWORK_IP6_ENABLE       = TRUE
+  DEFINE NETWORK_TLS_ENABLE       = TRUE
   DEFINE NETWORK_HTTP_BOOT_ENABLE = FALSE
+  DEFINE NETWORK_HTTP_ENABLE      = TRUE
   DEFINE NETWORK_ISCSI_ENABLE     = FALSE
   DEFINE SECURE_BOOT_ENABLE       = FALSE
 
   #
-  # Redfish definition
+  # Redfish support
   #
-  DEFINE REDFISH_ENABLE = FALSE
+  DEFINE REDFISH_ENABLE = TRUE
 
 [SkuIds]
   0|DEFAULT
@@ -100,6 +101,10 @@
   #
   PlatformBootManagerLib|EmulatorPkg/Library/PlatformBmLib/PlatformBmLib.inf
   KeyMapLib|EmulatorPkg/Library/KeyMapLibNull/KeyMapLibNull.inf
+  !if $(REDFISH_ENABLE) == TRUE
+    RedfishPlatformCredentialLib|EmulatorPkg/Library/RedfishPlatformCredentialLib/RedfishPlatformCredentialLib.inf
+    RedfishPlatformHostInterfaceLib|EmulatorPkg/Library/RedfishPlatformHostInterfaceLib/RedfishPlatformHostInterfaceLib.inf
+  !endif
 
   #
   # Misc
@@ -125,6 +130,15 @@
   AuthVariableLib|SecurityPkg/Library/AuthVariableLib/AuthVariableLib.inf
 !else
   AuthVariableLib|MdeModulePkg/Library/AuthVariableLibNull/AuthVariableLibNull.inf
+!endif
+
+!if $(REDFISH_ENABLE) == TRUE
+  BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
+  TlsLib|CryptoPkg/Library/TlsLib/TlsLib.inf
+  IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
+  RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
+  OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
+  PlatformSecureLib|SecurityPkg/Library/PlatformSecureLibNull/PlatformSecureLibNull.inf
 !endif
 
 [LibraryClasses.common.SEC]
@@ -253,6 +267,23 @@
 
   #  0-PCANSI, 1-VT100, 2-VT00+, 3-UTF8, 4-TTYTERM
   gEfiMdePkgTokenSpaceGuid.PcdDefaultTerminalType|1
+
+!if $(REDFISH_ENABLE) == TRUE
+  # Don't disable Redfish service even SecureBoot is disabled.
+  gEmulatorPkgTokenSpaceGuid.PcdServieStopIfSecureBootDisabled|FALSE
+
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishRestExServiceDevicePath.DevicePathMatchMode|DEVICE_PATH_MATCH_MAC_NODE
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishRestExServiceDevicePath.DevicePathNum|1
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishRestExServiceDevicePath.DevicePath|{DEVICE_PATH("MAC(10E7C6803DC2,0x1)")}
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishRestExServiceAccessModeInBand|False
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishDiscoverAccessModeInBand|False
+  gEfiNetworkPkgTokenSpaceGuid.PcdAllowHttpConnections|True
+!endif
+
+!if $(NETWORK_TLS_ENABLE) == TRUE
+  gEfiMdeModulePkgTokenSpaceGuid.PcdMaxVolatileVariableSize|0x1000
+  gEfiMdeModulePkgTokenSpaceGuid.PcdMaxVariableSize|0x1000
+!endif
 
 [PcdsDynamicDefault.common.DEFAULT]
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase64|0
@@ -451,6 +482,15 @@
 !endif
 
 !include NetworkPkg/Network.dsc.inc
+
+!if $(REDFISH_ENABLE) == TRUE
+  SecurityPkg/VariableAuthenticated/SecureBootConfigDxe/SecureBootConfigDxe.inf
+  EmulatorPkg/RedfishPlatformBiosResourceDxe/RedfishPlatformBiosResourceDxe.inf
+  EmulatorPkg/Application/RedfishPlatformConfig/RedfishPlatformConfig.inf
+!endif
+!include RedfishPkg/Redfish.dsc.inc
+
+  MdeModulePkg/Universal/SourceCodingDxe/SourceCodingDxe.inf
 
 [BuildOptions]
   #
