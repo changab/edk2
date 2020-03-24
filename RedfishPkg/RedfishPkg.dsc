@@ -52,8 +52,10 @@
   PerformanceLib|MdePkg/Library/BasePerformanceLibNull/BasePerformanceLibNull.inf
 
   JanssonLib|RedfishPkg/Library/JanssonLib/JanssonLib.inf
+  BaseJsonLib|RedfishPkg/Library/BaseJsonLib/BaseJsonLib.inf
 
 
 [Components]
   RedfishPkg/Library/JanssonLib/JanssonLib.inf
+  RedfishPkg/Library/BaseJsonLib/BaseJsonLib.inf
 

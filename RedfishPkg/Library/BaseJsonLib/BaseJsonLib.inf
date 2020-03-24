@@ -1,0 +1,56 @@
+##  @file
+#   Library used for HII Database - Redfish Json convert.
+#
+# Copyright (c) 2017 Intel Corporation. All rights reserved
+# (C) Copyright 2020 Hewlett Packard Enterprise Development LP<BR>
+#
+#    SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001b
+  BASE_NAME                      = BaseJsonLib
+  FILE_GUID                      = e2e11121-5233-11e7-a917-005056c00009
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = BaseJsonLib | DXE_DRIVER DXE_RUNTIME_DRIVER UEFI_APPLICATION UEFI_DRIVER
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources.common]
+  BaseJsonLib.c
+  JsonUtilities.c
+  JsonUtilities.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  RedfishPkg/RedfishPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  PrintLib
+  JanssonLib
+
+[Guids]
+
+[Protocols]
+
+[BuildOptions]
+  #
+  # Disables the following Visual Studio compiler warnings
+  # so we do not break the build with /WX option:
+  #   C4090: 'function' : different 'const' qualifiers
+  #   C4244: conversion from type1 to type2, possible loss of data
+  #   C4245: conversion from type1 to type2, signed/unsigned mismatch
+  #   C4267: conversion from size_t to type, possible loss of data
+  #   C4306: 'identifier' : conversion from 'type1' to 'type2' of greater size
+  #   C4389: 'operator' : signed/unsigned mismatch (xxxx)
+  #   C4702: unreachable code
+  #   C4706: assignment within conditional expression
+  #
+  MSFT:*_*_*_CC_FLAGS   = /wd4204 /wd4702 /wd4706 /wd4090
