@@ -65,3 +65,14 @@
   # protocol instance.
   #
   gEfiRedfishPkgTokenSpaceGuid.PcdRedfishDiscoverAccessModeInBand|FALSE|BOOLEAN|0x00001005
+  #
+  # String PCDs used for build up default BIOS Attribute Registry properties.
+  #
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishAttributeRegistryOdataType|"#AttributeRegistry.v1_0_0.AttributeRegistry"|VOID*|0x00001100
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishAttributeRegistryOdataId|"/redfish/v1/Registries/BiosAttributeRegistryUefiKeyword.v1_0_0"|VOID*|0x00001101
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishAttributeRegistryDescription|"This registry defines a representation of BIOS Attribute instances (UEFI configuration keyword)"|VOID*|0x00001102
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishAttributeRegistryId|"BiosAttributeRegistryUefiKeyword.v1_0_0"|VOID*|0x00001103
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishAttributeRegistryLanguage|"en"|VOID*|0x00001104
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishAttributeRegistryName|"BIOS Attribute Registry"|VOID*|0x00001105
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishAttributeRegistryOwningEntity|"EDKII"|VOID*|0x00001106
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishAttributeRegistryVersion|"1.0.0"|VOID*|0x00001107

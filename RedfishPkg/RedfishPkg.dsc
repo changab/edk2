@@ -77,4 +77,6 @@
   RedfishPkg/RedfishDiscoverDxe/RedfishDiscoverDxe.inf
   RedfishPkg/RedfishConfigDxe/RedfishConfigDxe.inf
   RedfishPkg/Features/RedfishBootInfoDxe/RedfishBootInfoDxe.inf
+  RedfishPkg/Features/RedfishBiosDxe/RedfishBiosDxe.inf
+
 

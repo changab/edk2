@@ -1,0 +1,106 @@
+## @file
+#  Redfish configure handler driver to manipulate the Redfish BIOS Attributes
+#  related resources.
+#
+#  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+#  (C) Copyright 2020 Hewlett Packard Enterprise Development LP<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION               = 0x0001001b
+  BASE_NAME                 = RedfishBiosDxe
+  FILE_GUID                 = F8D01453-874F-4E32-98B5-E8D6C8E7E66C
+  MODULE_TYPE               = UEFI_DRIVER
+  VERSION_STRING            = 1.0
+  ENTRY_POINT               = RedfishBiosDxeEntryPoint
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  NetworkPkg/NetworkPkg.dec
+  RedfishPkg/RedfishPkg.dec
+
+[Sources]
+  RedfishBiosDxe.h
+  RedfishBiosDxe.c
+
+  HiiRedfishLib.h
+  HiiRedfishJson.h
+  HiiRedfishJson.c
+  HiiRedfishMisc.h
+  HiiRedfishMisc.c
+
+  HiiKeywordLib.h
+  HiiKeywordLib.c
+
+  HiiUtilityLib.h
+  HiiUtilityLib.c
+  HiiInternal.h
+  HiiExpression.h
+  HiiExpression.c
+  HiiIfrParse.c
+  HiiUtilityInternal.c
+
+  RedfishBiosPlatformLib.c
+  RedfishBiosPlatformLib.h
+
+[LibraryClasses]
+  BaseLib
+  UefiDriverEntryPoint
+  RedfishLib
+  HttpLib
+  BaseJsonLib
+  HiiLib
+
+[Protocols]
+  gEfiSmbiosProtocolGuid                        ## CONSUMES
+  gEfiRedfishPlatformBiosResourceProtocolGuid   ## CONSUMES
+  gEfiRedfishConfigHandlerProtocolGuid          ## PRODUCES
+  gEfiDevicePathFromTextProtocolGuid            ## SOMETIMES_CONSUMES
+  gEfiConfigKeywordHandlerProtocolGuid
+
+  gEfiHiiDatabaseProtocolGuid
+  gEfiHiiConfigRoutingProtocolGuid
+  gEfiHiiConfigAccessProtocolGuid
+  gEfiUserManagerProtocolGuid
+  gEfiDevicePathFromTextProtocolGuid
+  gEfiRegularExpressionProtocolGuid
+  gEfiUnicodeCollation2ProtocolGuid
+
+[Guids]
+  gEfiEventReadyToBootGuid
+  gEfiHiiRestStyleFormsetGuid                   ## SOMETIMES_CONSUMES  ## GUID
+
+  gZeroGuid
+  gEdkiiIfrBitVarstoreGuid
+  gEfiHiiPlatformSetupFormsetGuid
+  gEfiHiiStandardFormGuid
+
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString              ## CONSUMES
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishAttributeRegistryOdataType    ## CONSUMES
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishAttributeRegistryOdataId      ## CONSUMES
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishAttributeRegistryDescription  ## CONSUMES
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishAttributeRegistryId           ## CONSUMES
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishAttributeRegistryLanguage     ## CONSUMES
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishAttributeRegistryName         ## CONSUMES
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishAttributeRegistryOwningEntity ## CONSUMES
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishAttributeRegistryVersion      ## CONSUMES
+
+[BuildOptions]
+  #
+  # Disables the following Visual Studio compiler warnings
+  # so we do not break the build with /WX option:
+  #   C4090: 'function' : different 'const' qualifiers
+  #   C4244: conversion from type1 to type2, possible loss of data
+  #   C4245: conversion from type1 to type2, signed/unsigned mismatch
+  #   C4267: conversion from size_t to type, possible loss of data
+  #   C4306: 'identifier' : conversion from 'type1' to 'type2' of greater size
+  #   C4389: 'operator' : signed/unsigned mismatch (xxxx)
+  #   C4702: unreachable code
+  #   C4706: assignment within conditional expression
+  #
+  MSFT:*_*_*_CC_FLAGS   = /wd4204 /wd4702 /wd4706 /wd4090
