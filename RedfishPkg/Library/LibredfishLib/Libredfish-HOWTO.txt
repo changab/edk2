@@ -1,0 +1,33 @@
+=============================================================================
+                             Introduction
+=============================================================================
+The DMTF libredfish library (https://github.com/DMTF/libredfish) is
+leveraged by DxeRedfishLib since it provides excellent query language
+and parsing logic. But the communication in original libredfish is based
+on libcurl, which is not supported in UEFI. So, we replace libcurl with
+EFI REST EX protocol to provide basic query abilities. Besides, we also
+refined the APIs to return the HTTP StatusCode.
+
+This HOWTO document provides the steps to build libredfish under UEFI
+environment.
+
+=============================================================================
+                      HOW to Install libredfish for UEFI Building
+=============================================================================
+  1. The user can use the below command to clone libredfish lib under the path:
+  RedfishPkg\Library\LibredfishLib:
+
+  $ git clone https://github.com/DMTF/libredfish.git
+
+  2. LibredfishLib v1.0.0 is supported to build with UEFI. So, the user needs
+  to checkout the tag version v1.0.0 under libredfish folder with command: 
+
+  $ git checkout v1.0.0
+  
+  3. Building the raw libredfish in UEFI directly will have some building errors,
+  the user needs to copy the file: Patch-Libredfish-For-UEFI.patch to libredfish
+  folder and patch it with command:
+  
+  $ git am Patch-Libredfish-For-UEFI.patch
+  
+  4. The patched libredfish lib can pass build under UEFI environment.

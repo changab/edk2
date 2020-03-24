@@ -18,6 +18,7 @@
   
 [Includes.Common.Private]
   Library/JanssonLib/jansson/src
+  Library/LibredfishLib/libredfish/bindings/uefi/include
   Library/Include
   
 [Protocols]
