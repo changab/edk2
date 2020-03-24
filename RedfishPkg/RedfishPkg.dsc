@@ -57,10 +57,12 @@
   JanssonLib|RedfishPkg/Library/JanssonLib/JanssonLib.inf
   BaseJsonLib|RedfishPkg/Library/BaseJsonLib/BaseJsonLib.inf
   LibredfishLib|RedfishPkg/Library/LibredfishLib/LibredfishLib.inf
+  RedfishLib|RedfishPkg/Library/DxeRedfishLib/DxeRedfishLib.inf
 
 [Components]
   RedfishPkg/Library/JanssonLib/JanssonLib.inf
   RedfishPkg/Library/BaseJsonLib/BaseJsonLib.inf
   RedfishPkg/Library/LibredfishLib/LibredfishLib.inf
+  RedfishPkg/Library/DxeRedfishLib/DxeRedfishLib.inf
 
   RedfishPkg/RestJsonStructureDxe/RestJsonStructureDxe.inf
