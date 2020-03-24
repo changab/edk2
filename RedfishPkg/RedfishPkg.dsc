@@ -54,8 +54,8 @@
   JanssonLib|RedfishPkg/Library/JanssonLib/JanssonLib.inf
   BaseJsonLib|RedfishPkg/Library/BaseJsonLib/BaseJsonLib.inf
 
-
 [Components]
   RedfishPkg/Library/JanssonLib/JanssonLib.inf
   RedfishPkg/Library/BaseJsonLib/BaseJsonLib.inf
 
+  RedfishPkg/RestJsonStructureDxe/RestJsonStructureDxe.inf
