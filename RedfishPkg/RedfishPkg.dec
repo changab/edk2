@@ -17,9 +17,13 @@
   Include
 
 [Includes.Common.Private]
-  Library/JanssonLib/jansson/src
   Library/LibredfishLib/libredfish/bindings/uefi/include
+  Library/JanssonLib/jansson/src
   Library/Include
+
+[LibraryClasses]
+  BaseJsonLib|Include/Library/BaseJsonLib.h
+  RedfishLib|Include/Library/RedfishLib.h
 
 [Protocols]
   ## Include/Protocol/RestEx.h
@@ -33,10 +37,8 @@
   gEfiRestJsonStructureProtocolGuid    = { 0xa9a048f6, 0x48a0, 0x4714, {0xb7, 0xda, 0xa9, 0xad,0x87, 0xd4, 0xda, 0xc9 }}
   ## Include/Protocol/RedfishDiscover.h
   gEfiRedfishDiscoverProtocolGuid      = { 0x5db12509, 0x4550, 0x4347, { 0x96, 0xb3, 0x73, 0xc0, 0xff, 0x6e, 0x86, 0x9f }}
-
-[LibraryClasses]
-  BaseJsonLib|Include/Library/BaseJsonLib.h
-  RedfishLib|Include/Library/RedfishLib.h
+  ## Include/Protocol/RedfishPlatformBiosResource.h
+  gEfiRedfishPlatformBiosResourceProtocolGuid = { 0x81C84065, 0x41D8, 0x3B38, { 0x87, 0x09, 0x36, 0x99, 0xD1, 0x2B, 0xE4, 0x49 } }
 
 [Guids]
   gEfiRedfishPkgTokenSpaceGuid      = { 0x4fdbccb7, 0xe829, 0x4b4c, { 0x88, 0x87, 0xb2, 0x3f, 0xd7, 0x25, 0x4b, 0x85 }}
