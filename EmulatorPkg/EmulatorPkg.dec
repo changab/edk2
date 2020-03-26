@@ -73,7 +73,9 @@
   ## Size of the packet filter
   gEmulatorPkgTokenSpaceGuid.PcdNetworkPacketFilterSize|524288|UINT32|0x0000101c
 
-
+  ## Redfish Service control definition
+  gEmulatorPkgTokenSpaceGuid.PcdServieStopIfSecureBootDisabled|TRUE|BOOLEAN|0x00001020
+  gEmulatorPkgTokenSpaceGuid.PcdServieStopIfExitbootService|TRUE|BOOLEAN|0x00001021
 
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   gEmulatorPkgTokenSpaceGuid.PcdEmuBootMode|1|UINT32|0x00001006
