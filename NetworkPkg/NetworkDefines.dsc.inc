@@ -15,12 +15,14 @@
 #   DEFINE NETWORK_IP4_ENABLE             = TRUE
 #   DEFINE NETWORK_IP6_ENABLE             = TRUE
 #   DEFINE NETWORK_TLS_ENABLE             = TRUE
+#   DEFINE NETWORK_HTTP_ENABLE            = TRUE
 #   DEFINE NETWORK_HTTP_BOOT_ENABLE       = TRUE
 #   DEFINE NETWORK_ALLOW_HTTP_CONNECTIONS = FALSE
 #   DEFINE NETWORK_ISCSI_ENABLE           = TRUE
 #   DEFINE NETWORK_VLAN_ENABLE            = TRUE
 #
 # Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+# (C) Copyright 2020 Hewlett Packard Enterprise Development LP<BR>
 #
 #    SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -71,6 +73,13 @@
   #       The OpensslLib.inf library instance should be used since libssl is required.
   #
   DEFINE NETWORK_TLS_ENABLE = TRUE
+!endif
+
+!ifndef NETWORK_HTTP_ENABLE
+  #
+  # This flag is to enable or disable HTTP(S) feature.
+  #
+  DEFINE NETWORK_HTTP_ENABLE = TRUE
 !endif
 
 !ifndef NETWORK_HTTP_BOOT_ENABLE

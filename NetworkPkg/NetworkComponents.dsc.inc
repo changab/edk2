@@ -48,10 +48,13 @@
     NetworkPkg/TlsAuthConfigDxe/TlsAuthConfigDxe.inf
   !endif
 
-  !if $(NETWORK_HTTP_BOOT_ENABLE) == TRUE
-    NetworkPkg/DnsDxe/DnsDxe.inf
+  !if ($(NETWORK_HTTP_BOOT_ENABLE) == TRUE) OR ($(NETWORK_HTTP_ENABLE) == TRUE)
     NetworkPkg/HttpDxe/HttpDxe.inf
     NetworkPkg/HttpUtilitiesDxe/HttpUtilitiesDxe.inf
+  !endif
+
+  !if $(NETWORK_HTTP_BOOT_ENABLE) == TRUE
+    NetworkPkg/DnsDxe/DnsDxe.inf
     NetworkPkg/HttpBootDxe/HttpBootDxe.inf
   !endif
 
