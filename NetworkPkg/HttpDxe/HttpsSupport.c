@@ -9,6 +9,22 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "HttpDriver.h"
 
+EFI_TLS_CIPHER DefaultHttpsCipher [] = {
+  TLS_RSA_WITH_NULL_MD5,
+  TLS_RSA_WITH_NULL_SHA,
+  // AES ciphersuites from RFC3268
+  TLS_RSA_WITH_AES_128_CBC_SHA,
+  TLS_DHE_RSA_WITH_AES_128_CBC_SHA,
+  TLS_RSA_WITH_AES_256_CBC_SHA,
+  TLS_DHE_RSA_WITH_AES_256_CBC_SHA,
+  // TLS v1.2 ciphersuites
+  TLS_RSA_WITH_NULL_SHA256,
+  TLS_RSA_WITH_AES_128_CBC_SHA256,
+  TLS_RSA_WITH_AES_256_CBC_SHA256,
+  TLS_DHE_RSA_WITH_AES_128_CBC_SHA256,
+  TLS_DHE_RSA_WITH_AES_256_CBC_SHA256
+};
+
 /**
   Returns the first occurrence of a Null-terminated ASCII sub-string in a Null-terminated
   ASCII string and ignore case during the search process.
@@ -557,8 +573,23 @@ TlsConfigCipherList (
                    &CipherListSize,
                    NULL
                    );
-  ASSERT (EFI_ERROR (Status));
-  if (Status != EFI_BUFFER_TOO_SMALL) {
+  //ASSERT (EFI_ERROR (Status));
+  if (Status == EFI_NOT_FOUND) {
+    //
+    // Create default cipher suits.
+    //
+    Status = gRT->SetVariable (
+                    EDKII_HTTP_TLS_CIPHER_LIST_VARIABLE, // VariableName
+                    &gEdkiiHttpTlsCipherListGuid,        // VendorGuid
+                    EFI_VARIABLE_BOOTSERVICE_ACCESS,     // Attributes
+                    sizeof (DefaultHttpsCipher),         // DataSize
+                    (VOID *)DefaultHttpsCipher           // Data
+                    );
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+    CipherListSize = sizeof(DefaultHttpsCipher);
+  } else if (Status != EFI_BUFFER_TOO_SMALL) {
     return Status;
   }
 
@@ -644,7 +675,7 @@ TlsConfigureSession (
   if (EFI_ERROR (Status)) {
     return Status;
   }
-
+/*
   Status = HttpInstance->Tls->SetSessionData (
                                 HttpInstance->Tls,
                                 EfiTlsVerifyMethod,
@@ -663,7 +694,7 @@ TlsConfigureSession (
                                 );
   if (EFI_ERROR (Status)) {
     return Status;
-  }
+  }*/
 
   Status = HttpInstance->Tls->SetSessionData (
                                 HttpInstance->Tls,
