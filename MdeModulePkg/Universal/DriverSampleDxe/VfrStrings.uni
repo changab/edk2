@@ -54,6 +54,8 @@
 #string STR_ONE_OF_PROMPT_KEYWORD      #language en-US "My Keyword Namespace Test"
                                        #language fr-FR "My Keyword Namespace Test"
                                        #language x-UEFI-ns "iSCSIBootEnable"
+#string STR_ONE_OF_TEST_NON_X_UEFI_KEYWORD #language en-US "My non X-UEFI Keyword Namespace Test"
+                                           #language fr-FR "My non X-UEFI Keyword Namespace Test"
 #string STR_CHECK_KEYWORD_SUPPORT      #language en-US "Check iSCSI Boot Enable"
                                        #language fr-FR "Check iSCSI Boot Enable"
 #string STR_ONE_OF_HELP                #language en-US "My one-of help is going to be a long string to test out the efficiency of the ability of the I am tired of typing capabilities"

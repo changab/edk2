@@ -92,6 +92,7 @@ typedef struct {
   UINT16  BitNumeric  : 12;
   MY_BITS_DATA  MyBitData;
   MY_EFI_UNION_DATA MyUnionData;
+  UINT8   QuestionNonXUefiKeywordTest;
 } DRIVER_SAMPLE_CONFIGURATION;
 
 //
