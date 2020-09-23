@@ -38,6 +38,10 @@
   DxeServicesTableLib|MdePkg/Library/DxeServicesTableLib/DxeServicesTableLib.inf
   DxeServicesLib|MdePkg/Library/DxeServicesLib/DxeServicesLib.inf
   ReportStatusCodeLib|MdeModulePkg/Library/DxeReportStatusCodeLib/DxeReportStatusCodeLib.inf
+  HttpLib|NetworkPkg/Library/DxeHttpLib/DxeHttpLib.inf
+  NetLib|NetworkPkg/Library/DxeNetLib/DxeNetLib.inf
+  DpcLib|NetworkPkg/Library/DxeDpcLib/DxeDpcLib.inf
 
 [Components]
   RedfishPkg/RestJsonStructureDxe/RestJsonStructureDxe.inf
+  RedfishPkg/RedfishRestExDxe/RedfishRestExDxe.inf
