@@ -41,6 +41,7 @@
   HttpLib|NetworkPkg/Library/DxeHttpLib/DxeHttpLib.inf
   NetLib|NetworkPkg/Library/DxeNetLib/DxeNetLib.inf
   DpcLib|NetworkPkg/Library/DxeDpcLib/DxeDpcLib.inf
+  RestExLib|MdeModulePkg/Library/DxeRestExLib/DxeRestExLib.inf
 
 [Components]
   RedfishPkg/RestJsonStructureDxe/RestJsonStructureDxe.inf
