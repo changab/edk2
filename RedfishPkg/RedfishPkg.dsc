@@ -44,5 +44,7 @@
 [Components]
   RedfishPkg/Library/PlatformHostInterfaceLibNull/PlatformHostInterfaceLibNull.inf
   RedfishPkg/Library/BaseUcs2Utf8Lib/BaseUcs2Utf8Lib.inf
+  RedfishPkg/Library/JsonLib/JsonLib.inf
+  RedfishPkg/Library/CrtLib/CrtLib.inf
 
   !include RedfishPkg/Redfish.dsc.inc
