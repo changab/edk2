@@ -67,6 +67,7 @@
   UefiLib|MdePkg/Library/UefiLib/UefiLib.inf
   DevicePathLib|MdePkg/Library/UefiDevicePathLibDevicePathProtocol/UefiDevicePathLibDevicePathProtocol.inf
   RiscVPlatformTimerLib|RiscVPkg/Library/RiscVPlatformTimerLibNull/RiscVPlatformTimerLib.inf
+  FdtLib|EmbeddedPkg/Library/FdtLib/FdtLib.inf
 
 [LibraryClasses.common.PEI_CORE]
   PeiServicesTablePointerLib|RiscVPkg/Library/PeiServicesTablePointerLibOpenSbi/PeiServicesTablePointerLibOpenSbi.inf
