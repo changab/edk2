@@ -878,9 +878,11 @@ MnpReceivePacket (
   //
   // Receive packet through Snp.
   //
+  DEBUG((DEBUG_INFO, "%a: Abner Snp->Receive\n", __FUNCTION__));
   Status = Snp->Receive (Snp, &HeaderSize, &BufLen, BufPtr, NULL, NULL, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG_CODE_BEGIN ();
+     DEBUG((DEBUG_INFO, "%a: Abner Snp->Receive error %r\n", __FUNCTION__, Status));
     if (Status != EFI_NOT_READY) {
       DEBUG ((DEBUG_WARN, "MnpReceivePacket: Snp->Receive() = %r.\n", Status));
     }
@@ -889,7 +891,7 @@ MnpReceivePacket (
 
     return Status;
   }
-
+  DEBUG((DEBUG_INFO, "%a: Abner Snp->Receive success\n", __FUNCTION__));
   //
   // Sanity check.
   //
@@ -1103,6 +1105,7 @@ MnpSystemPoll (
   MnpDeviceData = (MNP_DEVICE_DATA *)Context;
   NET_CHECK_SIGNATURE (MnpDeviceData, MNP_DEVICE_DATA_SIGNATURE);
 
+  DEBUG((DEBUG_INFO, "%a: Abner MnpSystemPoll\n", __FUNCTION__));
   //
   // Try to receive packets from Snp.
   //

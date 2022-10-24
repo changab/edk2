@@ -1588,6 +1588,7 @@ EfiIp4Transmit (
     return EFI_INVALID_PARAMETER;
   }
 
+  DEBUG((DEBUG_INFO, "%a: Abner EfiIp4Transmit\n", __FUNCTION__));
   IpInstance = IP4_INSTANCE_FROM_PROTOCOL (This);
 
   if (IpInstance->State != IP4_STATE_CONFIGED) {
@@ -2191,6 +2192,7 @@ EfiIp4Poll (
   // Don't lock the Poll function to enable the deliver of
   // the packet polled up.
   //
+  DEBUG ((DEBUG_INFO, "%a: Abner EfiIp4Poll\n", __FUNCTION__));
   return Mnp->Poll (Mnp);
 }
 

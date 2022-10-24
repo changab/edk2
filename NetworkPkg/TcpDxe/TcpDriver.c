@@ -685,6 +685,7 @@ Tcp6DriverBindingStart (
 {
   EFI_STATUS  Status;
 
+  DEBUG((DEBUG_INFO, "%a: Abner Tcp6DriverBindingStart\n", __FUNCTION__));
   Status = TcpCreateService (ControllerHandle, This->DriverBindingHandle, IP_VERSION_6);
   if ((Status == EFI_ALREADY_STARTED) || (Status == EFI_UNSUPPORTED)) {
     Status = EFI_SUCCESS;

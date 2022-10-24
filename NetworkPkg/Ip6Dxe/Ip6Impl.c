@@ -1830,5 +1830,6 @@ EfiIp6Poll (
   // Don't lock the Poll function to enable the deliver of
   // the packet polled up.
   //
+  DEBUG ((DEBUG_INFO, "%a: Abner EfiIp6Poll\n", __FUNCTION__));
   return Mnp->Poll (Mnp);
 }

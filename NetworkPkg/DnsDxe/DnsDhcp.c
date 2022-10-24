@@ -278,6 +278,7 @@ GetDns4ServerFromDhcp4 (
   BOOLEAN                           IsDone;
   UINTN                             Index;
 
+  DEBUG ((DEBUG_INFO, "%a: Abner GetDns4ServerFromDhcp4\n", __FUNCTION__));
   Image      = Instance->Service->ImageHandle;
   Controller = Instance->Service->ControllerHandle;
 
@@ -481,6 +482,7 @@ GetDns4ServerFromDhcp4 (
 
   Token.Packet->Dhcp4.Header.HwAddrLen = (UINT8)(InterfaceInfo->HwAddressSize);
 
+  DEBUG ((DEBUG_INFO, "%a: Abner GTransmitReceive\n", __FUNCTION__));
   //
   // TransmitReceive Token
   //
@@ -492,6 +494,7 @@ GetDns4ServerFromDhcp4 (
   //
   // Poll the packet
   //
+  DEBUG ((DEBUG_INFO, "%a: Abner GetDns4ServerFromDhcp4 : Poll the packet\n", __FUNCTION__));
   do {
     Status = Mnp->Poll (Mnp);
   } while (!IsDone);

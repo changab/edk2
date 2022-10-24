@@ -388,7 +388,7 @@ HttpDxeStart (
       goto ON_ERROR;
     }
   }
-
+  DEBUG((DEBUG_INFO, "%a: Abner HttpDxeStart\n", __FUNCTION__));
   if (IpVersion == IP_VERSION_4) {
     HttpService->Ip4DriverBindingHandle = This->DriverBindingHandle;
 
@@ -396,6 +396,7 @@ HttpDxeStart (
       //
       // Create a TCP4 child instance, but do not configure it. This will establish the parent-child relationship.
       //
+      DEBUG((DEBUG_INFO, "%a: Abner Create a TCP4 child instance\n", __FUNCTION__));
       Status = NetLibCreateServiceChild (
                  ControllerHandle,
                  This->DriverBindingHandle,

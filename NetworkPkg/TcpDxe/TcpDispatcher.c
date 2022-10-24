@@ -773,6 +773,7 @@ TcpDispatcher (
   ProtoData = (TCP_PROTO_DATA *)Sock->ProtoReserved;
   Tcb       = ProtoData->TcpPcb;
 
+  DEBUG((DEBUG_INFO, "%a: %d", __FUNCTION__, Request));
   switch (Request) {
     case SOCK_POLL:
       if (Tcb->Sk->IpVersion == IP_VERSION_4) {

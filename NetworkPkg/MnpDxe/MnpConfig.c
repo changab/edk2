@@ -484,6 +484,8 @@ MnpInitializeDeviceData (
     goto ERROR;
   }
 
+    DEBUG((DEBUG_INFO, "%a: Abner MnpTransmit MAC address %s\n", __FUNCTION__, MnpDeviceData->MacString));
+
   //
   // Initialize the FreeNetBufQue and pre-allocate some NET_BUFs.
   //
@@ -1265,7 +1267,7 @@ MnpStart (
     //
     TimerOpType = EnableSystemPoll ? TimerPeriodic : TimerCancel;
 
-    Status = gBS->SetTimer (MnpDeviceData->PollTimer, TimerOpType, MNP_SYS_POLL_INTERVAL);
+    Status = gBS->SetTimer (MnpDeviceData->PollTimer, TimerOpType, MNP_SYS_POLL_INTERVAL * 100*5);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "MnpStart: gBS->SetTimer for PollTimer failed, %r.\n", Status));
 

@@ -27,6 +27,8 @@ DhcpInitRequest (
 {
   EFI_STATUS  Status;
 
+
+ DEBUG((DEBUG_INFO, "%a: Abner DhcpInitRequest enter\n", __FUNCTION__));
   ASSERT ((DhcpSb->DhcpState == Dhcp4Init) || (DhcpSb->DhcpState == Dhcp4InitReboot));
 
   //
@@ -40,6 +42,7 @@ DhcpInitRequest (
 
     if (EFI_ERROR (Status)) {
       DhcpSb->DhcpState = Dhcp4Init;
+ DEBUG((DEBUG_INFO, "%a: Abner DhcpInitRequest exit\n", __FUNCTION__));
       return Status;
     }
   } else {
@@ -48,10 +51,11 @@ DhcpInitRequest (
 
     if (EFI_ERROR (Status)) {
       DhcpSb->DhcpState = Dhcp4InitReboot;
+ DEBUG((DEBUG_INFO, "%a: Abner DhcpInitRequest exit\n", __FUNCTION__));
       return Status;
     }
   }
-
+ DEBUG((DEBUG_INFO, "%a: Abner DhcpInitRequest exit\n", __FUNCTION__));
   return EFI_SUCCESS;
 }
 

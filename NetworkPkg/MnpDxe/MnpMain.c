@@ -174,7 +174,9 @@ MnpConfigure (
   //
   // Configure the instance.
   //
+ DEBUG((DEBUG_INFO, "%a: Abner MnpConfigureInstance enter\n", __FUNCTION__));
   Status = MnpConfigureInstance (Instance, MnpConfigData);
+ DEBUG((DEBUG_INFO, "%a: Abner MnpConfigureInstance exit\n", __FUNCTION__));
 
 ON_EXIT:
   gBS->RestoreTPL (OldTpl);
@@ -521,6 +523,8 @@ MnpTransmit (
     return EFI_INVALID_PARAMETER;
   }
 
+  DEBUG((DEBUG_INFO, "%a: Abner MnpTransmit\n", __FUNCTION__));
+
   Instance = MNP_INSTANCE_DATA_FROM_THIS (This);
 
   OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
@@ -761,6 +765,7 @@ MnpPoll (
     return EFI_INVALID_PARAMETER;
   }
 
+  DEBUG ((DEBUG_INFO, "%a: Abner MnpPoll\n", __FUNCTION__));
   Instance = MNP_INSTANCE_DATA_FROM_THIS (This);
 
   OldTpl = gBS->RaiseTPL (TPL_CALLBACK);

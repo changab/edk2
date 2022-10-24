@@ -301,11 +301,12 @@ Udp4CreateService (
   //
   // Configure and start the IpIo.
   //
+ DEBUG((DEBUG_INFO, "%a: Abner IpIoOpen enter\n", __FUNCTION__));
   Status = IpIoOpen (Udp4Service->IpIo, &OpenData);
   if (EFI_ERROR (Status)) {
     goto ON_ERROR;
   }
-
+ DEBUG((DEBUG_INFO, "%a: Abner IpIoOpen exit\n", __FUNCTION__));
   //
   // Create the event for Udp timeout checking.
   //

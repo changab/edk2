@@ -338,6 +338,7 @@ Ip4CreateService (
     goto ON_ERROR;
   }
 
+ DEBUG((DEBUG_INFO, "%a: Abner Ip4InitIgmp enter\n", __FUNCTION__));
   Status = Ip4InitIgmp (IpSb);
 
   if (EFI_ERROR (Status)) {
@@ -350,7 +351,7 @@ Ip4CreateService (
   if (EFI_ERROR (Status)) {
     goto ON_ERROR;
   }
-
+ DEBUG((DEBUG_INFO, "%a: Abner Ip4CreateInterface enter\n", __FUNCTION__));
   IpSb->DefaultInterface = Ip4CreateInterface (IpSb->Mnp, Controller, ImageHandle);
 
   if (IpSb->DefaultInterface == NULL) {
@@ -361,7 +362,7 @@ Ip4CreateService (
   InsertHeadList (&IpSb->Interfaces, &IpSb->DefaultInterface->Link);
 
   ZeroMem (&IpSb->Ip4Config2Instance, sizeof (IP4_CONFIG2_INSTANCE));
-
+ DEBUG((DEBUG_INFO, "%a: Abner Ip4Config2InitInstance enter\n", __FUNCTION__));
   Status = Ip4Config2InitInstance (&IpSb->Ip4Config2Instance);
 
   if (EFI_ERROR (Status)) {
@@ -600,6 +601,7 @@ Ip4DriverBindingStart (
   // Read the config data from NV variable again.
   // The default data can be changed by other drivers.
   //
+ DEBUG((DEBUG_INFO, "%a: Abner Ip4Config2ReadConfigData enter\n", __FUNCTION__));
   Status = Ip4Config2ReadConfigData (IpSb->MacString, &IpSb->Ip4Config2Instance);
   if (EFI_ERROR (Status)) {
     goto UNINSTALL_PROTOCOL;
@@ -632,6 +634,7 @@ Ip4DriverBindingStart (
   // Ip4Config2SetPolicy maybe call Ip4ReceiveFrame() to set the default interface's RecvRequest first after
   // Ip4Config2 instance is initialized. So, EFI_ALREADY_STARTED is the allowed return status.
   //
+ DEBUG((DEBUG_INFO, "%a: Abner Ip4ReceiveFrame enter\n", __FUNCTION__));
   Status = Ip4ReceiveFrame (IpSb->DefaultInterface, NULL, Ip4AccpetFrame, IpSb);
 
   if (EFI_ERROR (Status) && (Status != EFI_ALREADY_STARTED)) {

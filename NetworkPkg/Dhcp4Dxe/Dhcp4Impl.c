@@ -809,6 +809,7 @@ EfiDhcp4Start (
 
   DhcpSb->IoStatus = EFI_ALREADY_STARTED;
 
+ DEBUG((DEBUG_INFO, "%a: Abner DhcpInitRequest\n", __FUNCTION__));
   if (EFI_ERROR (Status = DhcpInitRequest (DhcpSb))) {
     goto ON_ERROR;
   }

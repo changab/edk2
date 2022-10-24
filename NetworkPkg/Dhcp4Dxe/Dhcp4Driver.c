@@ -295,7 +295,7 @@ Dhcp4DriverBindingStart (
   if (Status == EFI_SUCCESS) {
     return EFI_ALREADY_STARTED;
   }
-
+ DEBUG((DEBUG_INFO, "%a: Abner Dhcp4DriverBindingStart enter\n", __FUNCTION__));
   Status = Dhcp4CreateService (ControllerHandle, This->DriverBindingHandle, &DhcpSb);
 
   if (EFI_ERROR (Status)) {
@@ -307,9 +307,11 @@ Dhcp4DriverBindingStart (
   //
   // Start the receiving
   //
+ DEBUG((DEBUG_INFO, "%a: Abner UdpIoRecvDatagram enter\n", __FUNCTION__));
   Status = UdpIoRecvDatagram (DhcpSb->UdpIo, DhcpInput, DhcpSb, 0);
 
   if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_INFO, "%a: Abner UdpIoRecvDatagram Error!\n", __FUNCTION__));
     goto ON_ERROR;
   }
 
@@ -544,10 +546,10 @@ Dhcp4ServiceBindingCreateChild (
   if (Instance == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
-
+ DEBUG((DEBUG_INFO, "%a: Abner DhcpInitProtocol before\n", __FUNCTION__));
   DhcpSb = DHCP_SERVICE_FROM_THIS (This);
   DhcpInitProtocol (DhcpSb, Instance);
-
+ DEBUG((DEBUG_INFO, "%a: Abner DhcpInitProtocol after\n", __FUNCTION__));
   //
   // Install DHCP4 onto ChildHandle
   //
