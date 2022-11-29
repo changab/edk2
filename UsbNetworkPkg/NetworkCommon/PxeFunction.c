@@ -1685,7 +1685,7 @@ UpdateNicNum (
   @param[in]  Cdb  A pointer to the command descriptor block.
 
 **/
-VOID
+EFI_STATUS
 EFIAPI
 UndiApiEntry (
   IN  UINT64  Cdb
@@ -1697,12 +1697,13 @@ UndiApiEntry (
   DEBUG((DEBUG_INFO, "UndiApiEntry:\n"));
 
   if (Cdb == 0) {
-    return;
+    return EFI_INVALID_PARAMETER;
   }
 
   CdbPtr = (PXE_CDB *)(UINTN)Cdb;
   Nic    = &(gLanDeviceList[CdbPtr->IFnum]->NicInfo);
   gUndiApiTable[CdbPtr->OpCode](CdbPtr, Nic);
+  return EFI_SUCCESS;
 }
 
 /**
