@@ -37,6 +37,7 @@ API_FUNC  gUndiApiTable[] = {
 
 **/
 VOID
+EFIAPI
 UndiGetState (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
@@ -81,6 +82,7 @@ UndiGetState (
 
 **/
 VOID
+EFIAPI
 UndiStart (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
@@ -140,6 +142,7 @@ UndiStart (
 
 **/
 VOID
+EFIAPI
 UndiStop (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
@@ -203,6 +206,7 @@ UndiStop (
 
 **/
 VOID
+EFIAPI
 UndiGetInitInfo (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
@@ -274,6 +278,7 @@ UndiGetInitInfo (
 
 **/
 VOID
+EFIAPI
 UndiGetConfigInfo (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
@@ -327,6 +332,7 @@ UndiGetConfigInfo (
 
 **/
 VOID
+EFIAPI
 UndiInitialize (
   IN      PXE_CDB   *Cdb,
   IN OUT  NIC_DATA  *Nic
@@ -490,6 +496,7 @@ Initialize (
 
 **/
 VOID
+EFIAPI
 UndiReset (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
@@ -555,6 +562,7 @@ UndiReset (
 
 **/
 VOID
+EFIAPI
 UndiShutdown (
   IN      PXE_CDB   *Cdb,
   IN OUT  NIC_DATA  *Nic
@@ -610,6 +618,7 @@ UndiShutdown (
 
 **/
 VOID
+EFIAPI
 UndiInterruptEnable (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
@@ -639,6 +648,7 @@ UndiInterruptEnable (
 
 **/
 VOID
+EFIAPI
 UndiReceiveFilter (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
@@ -821,6 +831,7 @@ Setfilter (
 
 **/
 VOID
+EFIAPI
 UndiStationAddress (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
@@ -892,6 +903,7 @@ UndiStationAddress (
 
 **/
 VOID
+EFIAPI
 UndiStatistics (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
@@ -985,6 +997,7 @@ Statistics (
 
 **/
 VOID
+EFIAPI
 UndiMcastIp2Mac (
   IN OUT  PXE_CDB   *Cdb,
   IN      NIC_DATA  *Nic
@@ -1057,6 +1070,7 @@ UndiMcastIp2Mac (
 
 **/
 VOID
+EFIAPI
 UndiNvData (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
@@ -1086,6 +1100,7 @@ UndiNvData (
 
 **/
 VOID
+EFIAPI
 UndiGetStatus (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
@@ -1181,6 +1196,7 @@ UndiGetStatus (
 
 **/
 VOID
+EFIAPI
 UndiFillHeader (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
@@ -1265,6 +1281,7 @@ UndiFillHeader (
 
 **/
 VOID
+EFIAPI
 UndiTransmit (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
@@ -1327,6 +1344,7 @@ UndiTransmit (
 
 **/
 UINT16
+EFIAPI
 Transmit (
   IN      PXE_CDB   *Cdb,
   IN OUT  NIC_DATA  *Nic,
@@ -1427,6 +1445,7 @@ Transmit (
 
 **/
 VOID
+EFIAPI
 UndiReceive (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
@@ -1489,6 +1508,7 @@ UndiReceive (
 
 **/
 UINT16
+EFIAPI
 Receive (
   IN PXE_CDB       *Cdb,
   IN OUT NIC_DATA  *Nic,
@@ -1666,12 +1686,15 @@ UpdateNicNum (
 
 **/
 VOID
+EFIAPI
 UndiApiEntry (
   IN  UINT64  Cdb
   )
 {
   PXE_CDB   *CdbPtr;
   NIC_DATA  *Nic;
+
+  DEBUG((DEBUG_INFO, "UndiApiEntry:\n"));
 
   if (Cdb == 0) {
     return;

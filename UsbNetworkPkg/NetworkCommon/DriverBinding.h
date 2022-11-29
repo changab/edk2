@@ -116,108 +116,126 @@ UnMapIt (
   );
 
 VOID
+EFIAPI
 UndiGetState (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
   );
 
 VOID
+EFIAPI
 UndiStart (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
   );
 
 VOID
+EFIAPI
 UndiStop (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
   );
 
 VOID
+EFIAPI
 UndiGetInitInfo (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
   );
 
 VOID
+EFIAPI
 UndiGetConfigInfo (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
   );
 
 VOID
+EFIAPI
 UndiInitialize (
   IN      PXE_CDB   *Cdb,
   IN OUT  NIC_DATA  *Nic
   );
 
 VOID
+EFIAPI
 UndiReset (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
   );
 
 VOID
+EFIAPI
 UndiShutdown (
   IN      PXE_CDB   *Cdb,
   IN OUT  NIC_DATA  *Nic
   );
 
 VOID
+EFIAPI
 UndiInterruptEnable (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
   );
 
 VOID
+EFIAPI
 UndiReceiveFilter (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
   );
 
 VOID
+EFIAPI
 UndiStationAddress (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
   );
 
 VOID
+EFIAPI
 UndiStatistics (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
   );
 
 VOID
+EFIAPI
 UndiMcastIp2Mac (
   IN OUT  PXE_CDB   *Cdb,
   IN      NIC_DATA  *Nic
   );
 
 VOID
+EFIAPI
 UndiNvData (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
   );
 
 VOID
+EFIAPI
 UndiGetStatus (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
   );
 
 VOID
+EFIAPI
 UndiFillHeader (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
   );
 
 VOID
+EFIAPI
 UndiTransmit (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
   );
 
 VOID
+EFIAPI
 UndiReceive (
   IN  PXE_CDB   *Cdb,
   IN  NIC_DATA  *Nic
@@ -230,6 +248,7 @@ Initialize (
   );
 
 UINT16
+EFIAPI
 Transmit (
   IN      PXE_CDB   *Cdb,
   IN OUT  NIC_DATA  *Nic,
@@ -238,6 +257,7 @@ Transmit (
   );
 
 UINT16
+EFIAPI
 Receive (
   IN PXE_CDB       *Cdb,
   IN OUT NIC_DATA  *Nic,
