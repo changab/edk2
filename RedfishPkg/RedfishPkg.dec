@@ -4,6 +4,7 @@
 # Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
 # (C) Copyright 2021 Hewlett Packard Enterprise Development LP<BR>
 # Copyright (c) 2023, American Megatrends International LLC.
+# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
@@ -54,6 +55,10 @@
   #   Redfish packet.
   #
   RedfishContentCodingLib|Include/Library/RedfishContentCodingLib.h
+
+  ##  @libraryclass Redfish Debug Library
+  #   Library provides Redfish debug functions.
+  RedfishDebugLib|Include/Library/RedfishDebugLib.h
 
 [LibraryClasses.Common.Private]
   ##  @libraryclass  Provides the private C runtime library functions.
@@ -108,3 +113,13 @@
   # Default is set to not add.
   #
   gEfiRedfishPkgTokenSpaceGuid.PcdRedfishRestExAddingExpect|FALSE|BOOLEAN|0x00001004
+  #
+  # Use PCD to declare the Redfish host nmae becasue there is no
+  # specification for that.
+  #
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishHostName|"Redfish service"|VOID*|0x00001005
+  #
+  # Use PCD to declare the Redfish service UUID becasue there is no
+  # specification for that.
+  #
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishServiceUuid|L"00000000-0000-0000-0000-000000000000"|VOID*|0x00001006

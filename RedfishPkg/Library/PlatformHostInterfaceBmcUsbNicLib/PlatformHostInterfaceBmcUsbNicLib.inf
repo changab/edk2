@@ -40,5 +40,9 @@
   gEfiUsbIoProtocolGuid                         ## CONSUMED
   gEfiDevicePathProtocolGuid                    ## CONSUMED
 
+[Pcd]
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishHostName     ## CONSUMED
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishServiceUuid  ## CONSUMED
+
 [Depex]
   gIpmiProtocolGuid

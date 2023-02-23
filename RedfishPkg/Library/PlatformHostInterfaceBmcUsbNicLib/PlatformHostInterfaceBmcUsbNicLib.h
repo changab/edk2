@@ -1,11 +1,11 @@
 /** @file
-*  Header file to provide the platform Redfish Host Interface information
-*  of USB NIC Device exposed by BMC.
-*
-*  Copyright (C) 2023 Advanced Micro Devices, Inc. All rights reserved.
-*
-*  SPDX-License-Identifier: BSD-2-Clause-Patent
-*
+  Header file to provide the platform Redfish Host Interface information
+  of USB NIC Device exposed by BMC.
+
+  Copyright (C) 2023 Advanced Micro Devices, Inc. All rights reserved.
+
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
 **/
 
 #ifndef PLATFORM_HOST_INTERFACE_BMC_USB_NIC_LIB_H_
@@ -27,6 +27,7 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/DevicePathLib.h>
+#include <Library/RedfishDebugLib.h>
 
 #include <Protocol/SimpleNetwork.h>
 #include <Protocol/UsbIo.h>

@@ -1,11 +1,11 @@
 /** @file
-*  Source file to provide the platform Redfish Host Interface information
-*  of USB NIC Device exposed by BMC.
-*
-*  Copyright (C) 2023 Advanced Micro Devices, Inc. All rights reserved.
-*
-*  SPDX-License-Identifier: BSD-2-Clause-Patent
-*
+  Source file to provide the platform Redfish Host Interface information
+  of USB NIC Device exposed by BMC.
+
+  Copyright (C) 2023 Advanced Micro Devices, Inc. All rights reserved.
+
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
 **/
 
 #include "PlatformHostInterfaceBmcUsbNicLib.h"
@@ -65,10 +65,10 @@ ProbeRedfishCredentialBootstrap (
        (ResponseData.CompletionCode == REDFISH_IPMI_COMP_CODE_BOOTSTRAP_CREDENTIAL_DISABLED)
       ))
   {
-    DEBUG ((DEBUG_INFO, "    Redfish Credentail Bootstrapping is supported\n", __FUNCTION__));
+    DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "    Redfish Credentail Bootstrapping is supported\n", __FUNCTION__));
     ReturnBool = TRUE;
   } else {
-    DEBUG ((DEBUG_INFO, "    Redfish Credentail Bootstrapping is not supported\n", __FUNCTION__));
+    DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "    Redfish Credentail Bootstrapping is not supported\n", __FUNCTION__));
     ReturnBool = FALSE;
   }
 
@@ -126,7 +126,7 @@ RedfishPlatformHostInterfaceDeviceDescriptor (
       InterfaceData->DeviceDescriptor.UsbDeviceV2.Characteristics              |= (UINT16)ThisInstance->CredentialBootstrapping;
       InterfaceData->DeviceDescriptor.UsbDeviceV2.CredentialBootstrappingHandle = 0;
       *DeviceDescriptor                                                         = InterfaceData;
-      DEBUG ((DEBUG_INFO, "    REDFISH_INTERFACE_DATA is returned successfully.\n"));
+      DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "    REDFISH_INTERFACE_DATA is returned successfully.\n"));
       return EFI_SUCCESS;
     }
 
@@ -164,6 +164,7 @@ RedfishPlatformHostInterfaceProtocolData (
   MC_HOST_INTERFACE_PROTOCOL_RECORD  *ThisProtocolRecord;
   REDFISH_OVER_IP_PROTOCOL_DATA      *RedfishOverIpData;
   UINT8                              HostNameLength;
+  CHAR8                              *HostNameString;
 
   DEBUG ((DEBUG_INFO, "%a: Entry\n", __FUNCTION__));
 
@@ -174,14 +175,16 @@ RedfishPlatformHostInterfaceProtocolData (
   ThisInstance = (HOST_INTERFACE_BMC_USB_NIC_INFO *)GetFirstNode (&mBmcUsbNic);
   while (TRUE) {
     if (ThisInstance->IsExposedByBmc  && ThisInstance->IsSuppportedHostInterface) {
-      HostNameLength     = 0;
+      // Get the host name before allocating memory.
+      HostNameString     = (CHAR8 *)PcdGetPtr (PcdRedfishHostName);
+      HostNameLength     = (UINT8)AsciiStrSize (HostNameString);
       ThisProtocolRecord = (MC_HOST_INTERFACE_PROTOCOL_RECORD *)AllocateZeroPool (
                                                                   sizeof (MC_HOST_INTERFACE_PROTOCOL_RECORD) - 1 +
                                                                   sizeof (REDFISH_OVER_IP_PROTOCOL_DATA) +
                                                                   HostNameLength
                                                                   );
       if (ThisProtocolRecord == NULL) {
-        DEBUG ((DEBUG_ERROR, "    Aloocate memory fail for MC_HOST_INTERFACE_PROTOCOL_RECORD.\n"));
+        DEBUG ((DEBUG_ERROR, "    Allocate memory fail for MC_HOST_INTERFACE_PROTOCOL_RECORD.\n"));
         return EFI_OUT_OF_RESOURCES;
       }
 
@@ -192,8 +195,12 @@ RedfishPlatformHostInterfaceProtocolData (
       // Fill up REDFISH_OVER_IP_PROTOCOL_DATA
       //
 
-      // ServiceUuid TODO: Redfish Host Interface spec update.
-      // RedfishOverIpData->ServiceUuid = ;
+      // Service UUID
+      ZeroMem ((VOID *)&RedfishOverIpData->ServiceUuid, sizeof (EFI_GUID));
+      if (StrLen ((CONST CHAR16 *)PcdGetPtr (PcdRedfishServiceUuid)) != 0) {
+        StrToGuid ((CONST CHAR16 *)PcdGetPtr (PcdRedfishServiceUuid), &RedfishOverIpData->ServiceUuid);
+        DEBUG((DEBUG_REDFISH_HOST_INTERFACE, " Service UUID: %g", &RedfishOverIpData->ServiceUuid));
+      }
 
       // HostIpAddressFormat and RedfishServiceIpDiscoveryType
       RedfishOverIpData->HostIpAssignmentType          = RedfishHostIpAssignmentUnknown;
@@ -243,12 +250,16 @@ RedfishPlatformHostInterfaceProtocolData (
       RedfishOverIpData->RedfishServiceVlanId = ThisInstance->VLanId;
 
       // RedfishServiceHostnameLength
-      RedfishOverIpData->RedfishServiceHostnameLength = 0;
+      RedfishOverIpData->RedfishServiceHostnameLength = HostNameLength;
 
-      // RedfishServiceHostname TODO: Redfish Host Interface spec update.
-      // RedfishOverIpData->RedfishServiceHostname = ;
+      // Redfish host name.
+      CopyMem (
+        (VOID *)&RedfishOverIpData->RedfishServiceHostname,
+        (VOID *)HostNameString,
+        HostNameLength
+        );
 
-      DEBUG ((DEBUG_INFO, "    MC_HOST_INTERFACE_PROTOCOL_RECORD is returned successfully.\n"));
+      DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "    MC_HOST_INTERFACE_PROTOCOL_RECORD is returned successfully.\n"));
       *ProtocolRecord = ThisProtocolRecord;
       return EFI_SUCCESS;
     }
@@ -325,7 +336,7 @@ RetrievedBmcUsbNicInfo (
       }
 
       IpAddressSrc = (IPMI_LAN_IP_ADDRESS_SRC *)(GetLanConfigReps + 1);
-      DEBUG ((DEBUG_INFO, "    IP address source at channel %d: %x\n", ThisInstance->IpmiLanChannelNumber, IpAddressSrc->Bits.AddressSrc));
+      DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "    IP address source at channel %d: %x\n", ThisInstance->IpmiLanChannelNumber, IpAddressSrc->Bits.AddressSrc));
       ThisInstance->IpAssignedType = IpAddressSrc->Bits.AddressSrc;
       FreePool (GetLanConfigReps);
 
@@ -347,7 +358,7 @@ RetrievedBmcUsbNicInfo (
 
       DestIpAddress = (IPMI_LAN_IP_ADDRESS *)(GetLanConfigReps + 1);
       DEBUG ((
-        DEBUG_INFO,
+        DEBUG_REDFISH_HOST_INTERFACE,
         "    Dest IP address at channel %d: %d.%d.%d.%d\n",
         ThisInstance->IpmiLanChannelNumber,
         DestIpAddress->IpAddress[0],
@@ -363,7 +374,7 @@ RetrievedBmcUsbNicInfo (
       ThisInstance->HostIpAddressIpv4[sizeof (ThisInstance->HostIpAddressIpv4) - 1] -= 1;
       FreePool (GetLanConfigReps);
       DEBUG ((
-        DEBUG_INFO,
+        DEBUG_REDFISH_HOST_INTERFACE,
         "    Host IP address at channel %d: %d.%d.%d.%d\n",
         ThisInstance->IpmiLanChannelNumber,
         ThisInstance->HostIpAddressIpv4[0],
@@ -390,7 +401,7 @@ RetrievedBmcUsbNicInfo (
 
       SubnetMask = (IPMI_LAN_SUBNET_MASK *)(GetLanConfigReps + 1);
       DEBUG ((
-        DEBUG_INFO,
+        DEBUG_REDFISH_HOST_INTERFACE,
         "    Subnet mask at channel %d: %d.%d.%d.%d\n",
         ThisInstance->IpmiLanChannelNumber,
         SubnetMask->IpAddress[0],
@@ -419,7 +430,7 @@ RetrievedBmcUsbNicInfo (
 
       DefaultGateway = (IPMI_LAN_DEFAULT_GATEWAY *)(GetLanConfigReps + 1);
       DEBUG ((
-        DEBUG_INFO,
+        DEBUG_REDFISH_HOST_INTERFACE,
         "    Gateway at channel %d: %d.%d.%d.%d\n",
         ThisInstance->IpmiLanChannelNumber,
         DefaultGateway->IpAddress[0],
@@ -452,7 +463,7 @@ RetrievedBmcUsbNicInfo (
         ThisInstance->VLanId = LanVlanId->Data1.VanIdLowByte | (LanVlanId->Data2.Bits.VanIdHighByte << 8);
       }
 
-      DEBUG ((DEBUG_INFO, "    VLAN ID %x\n", ThisInstance->VLanId));
+      DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "    VLAN ID %x\n", ThisInstance->VLanId));
 
       FreePool (GetLanConfigReps);
 
@@ -462,11 +473,11 @@ RetrievedBmcUsbNicInfo (
       if (ThisInstance->ThisUsbIo != NULL) {
         Status = ThisInstance->ThisUsbIo->UsbGetDeviceDescriptor (ThisInstance->ThisUsbIo, &UsbDeviceDescriptor);
         if (!EFI_ERROR (Status)) {
-          DEBUG ((DEBUG_INFO, "    USB NIC Vendor ID: 0x%04x, Device ID: 0x%04x\n", UsbDeviceDescriptor.IdVendor, UsbDeviceDescriptor.IdProduct));
+          DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "    USB NIC Vendor ID: 0x%04x, Device ID: 0x%04x\n", UsbDeviceDescriptor.IdVendor, UsbDeviceDescriptor.IdProduct));
           ThisInstance->UsbVendorId  = UsbDeviceDescriptor.IdVendor;
           ThisInstance->UsbProductId = UsbDeviceDescriptor.IdProduct;
         } else {
-          DEBUG ((DEBUG_INFO, "    Fail to get USB device descriptor.\n"));
+          DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "    Fail to get USB device descriptor.\n"));
         }
       }
 
@@ -621,12 +632,12 @@ HostInterfaceIpmiCheckMacAddress (
     }
 
     if (Status == EFI_SUCCESS) {
-      DEBUG ((DEBUG_INFO, "  Got cached IPMI LAN info.\n"));
+      DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "  Got cached IPMI LAN info.\n"));
       IpmiLanMacAddressSize = sizeof (IPMI_LAN_MAC_ADDRESS);
       CopyMem ((VOID *)&IpmiLanChannelMacAddress.Addr, (VOID *)&CachedIpmiLanChannel->MacAddress.Addr, IpmiLanMacAddressSize);
     } else {
-      DEBUG ((DEBUG_INFO, "  No cached IPMI LAN info\n"));
-      DEBUG ((DEBUG_INFO, "  Send NetFn = App, Command = 0x42 to channel %d\n", ChannelNum));
+      DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "  No cached IPMI LAN info\n"));
+      DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "  Send NetFn = App, Command = 0x42 to channel %d\n", ChannelNum));
       GetChanelInfoRequest.ChannelNumber.Bits.ChannelNo = (UINT8)ChannelNum;
       Status                                            = IpmiGetChannelInfo (
                                                             &GetChanelInfoRequest,
@@ -638,14 +649,14 @@ HostInterfaceIpmiCheckMacAddress (
         continue;
       }
 
-      DEBUG ((DEBUG_INFO, "    - Response data size = 0x%x\n", ResponseDataSize));
+      DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "    - Response data size = 0x%x\n", ResponseDataSize));
       if ((GetChanelInfoResponse.CompletionCode != IPMI_COMP_CODE_NORMAL) || (ResponseDataSize == 0)) {
         DEBUG ((DEBUG_ERROR, "    - Command returned fail: 0x%x.\n", GetChanelInfoResponse.CompletionCode));
         continue;
       }
 
       DEBUG ((
-        DEBUG_INFO,
+        DEBUG_REDFISH_HOST_INTERFACE,
         "    - Channel protocol = 0x%x, Media = 0x%x\n",
         GetChanelInfoResponse.ProtocolType.Bits.ChannelProtocolType,
         GetChanelInfoResponse.MediumType.Bits.ChannelMediumType
@@ -663,7 +674,7 @@ HostInterfaceIpmiCheckMacAddress (
       if ((GetChanelInfoResponse.MediumType.Bits.ChannelMediumType == IPMI_CHANNEL_MEDIA_TYPE_802_3_LAN) &&
           (GetChanelInfoResponse.ProtocolType.Bits.ChannelProtocolType == IPMI_CHANNEL_PROTOCOL_TYPE_IPMB_1_0))
       {
-        DEBUG ((DEBUG_INFO, "    - Channel %d is a LAN device!\n", ChannelNum));
+        DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "    - Channel %d is a LAN device!\n", ChannelNum));
 
         ResponseDataSize = sizeof (IPMI_GET_LAN_CONFIGURATION_PARAMETERS_RESPONSE) +
                            sizeof (IPMI_LAN_MAC_ADDRESS);
@@ -692,9 +703,9 @@ HostInterfaceIpmiCheckMacAddress (
             ));
           continue;
         } else {
-          DEBUG ((DEBUG_INFO, "    The MAC address of channel %d.\n", ChannelNum));
+          DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "    The MAC address of channel %d.\n", ChannelNum));
           DEBUG ((
-            DEBUG_INFO,
+            DEBUG_REDFISH_HOST_INTERFACE,
             "      %02x:%02x:%02x:%02x:%02x:%02x\n",
             *((UINT8 *)(GetLanConfigReps + 1) + 0),
             *((UINT8 *)(GetLanConfigReps + 1) + 1),
@@ -712,12 +723,12 @@ HostInterfaceIpmiCheckMacAddress (
     if (IpmiLanMacAddressSize != 0) {
       if (!AlreadyCached) {
         // Cache this IPMI LAN channel.
-        DEBUG ((DEBUG_INFO, "    Cache this IPMI LAN channel.\n"));
+        DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "    Cache this IPMI LAN channel.\n"));
         CacheIpmiLanMac ((UINT8)ChannelNum, &IpmiLanChannelMacAddress, IpmiLanMacAddressSize);
       }
 
       //
-      // According to UEFI spec section: TBD.
+      // According to design spec in Readme file under RedfishPkg.
       // Compare the first five MAC address and
       // the 6th MAC address.
       //
@@ -731,14 +742,14 @@ HostInterfaceIpmiCheckMacAddress (
            *(UsbNicInfo->MacAddress + IpmiLanMacAddressSize - 1) - 1)
           )
       {
-        DEBUG ((DEBUG_INFO, "    MAC address is not matched.\n"));
+        DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "    MAC address is not matched.\n"));
         continue;
       }
 
       // This is the NIC exposed by BMC.
       UsbNicInfo->IpmiLanChannelNumber = (UINT8)ChannelNum;
       UsbNicInfo->IsExposedByBmc       = TRUE;
-      DEBUG ((DEBUG_INFO, "    MAC address is matched.\n"));
+      DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "    MAC address is matched.\n"));
       ExitStatus = EFI_SUCCESS;
       break;
     }
@@ -813,10 +824,15 @@ UsbNicSearchUsbIo (
   EFI_DEVICE_PATH_PROTOCOL  *ThisUsbDevicePathEnd;
 
   DEBUG ((DEBUG_INFO, "%a: Entry.\n", __FUNCTION__));
-  DEBUG ((DEBUG_INFO, "Device path on the EFI handle which has UsbIo and SNP instaleld on it.\n"));
+  DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "Device path on the EFI handle which has UsbIo and SNP instaleld on it.\n"));
   DevicePathStr = ConvertDevicePathToText (UsbDevicePath, FALSE, FALSE);
-  DEBUG ((DEBUG_INFO, "%s\n", DevicePathStr));
-  FreePool (DevicePathStr);
+  if (DevicePathStr != NULL) {
+    DEBUG((DEBUG_REDFISH_HOST_INTERFACE, "%s\n", DevicePathStr));
+    FreePool (DevicePathStr);
+  } else {
+    DEBUG((DEBUG_ERROR, "Failed to convert device path.\n"));
+    return EFI_INVALID_PARAMETER;
+  }
 
   BufferSize   = 0;
   HandleBuffer = NULL;
@@ -829,7 +845,7 @@ UsbNicSearchUsbIo (
                         NULL
                         );
   if (Status == EFI_BUFFER_TOO_SMALL) {
-    DEBUG ((DEBUG_INFO, "  %d UsbIo protocol instances.\n", BufferSize/sizeof (EFI_HANDLE)));
+    DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "  %d UsbIo protocol instances.\n", BufferSize/sizeof (EFI_HANDLE)));
     HandleBuffer = AllocateZeroPool (BufferSize);
     if (HandleBuffer == NULL) {
       DEBUG ((DEBUG_ERROR, "    Falied to allocate buffer for the handles.\n"));
@@ -862,10 +878,15 @@ UsbNicSearchUsbIo (
       continue;
     }
 
-    DEBUG ((DEBUG_INFO, "Device path on #%d instance of UsbIo.\n", Index));
+    DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "Device path on #%d instance of UsbIo.\n", Index));
     DevicePathStr = ConvertDevicePathToText (ThisDevicePath, FALSE, FALSE);
-    DEBUG ((DEBUG_INFO, "%s\n", DevicePathStr));
-    FreePool (DevicePathStr);
+    if (DevicePathStr != NULL) {
+      DEBUG((DEBUG_REDFISH_HOST_INTERFACE, "%s\n", DevicePathStr));
+      FreePool (DevicePathStr);
+    } else {
+      DEBUG((DEBUG_ERROR, "Failed to convert device path on #%d instance of UsbIo.\n", Index));
+      continue;
+    }
 
     Status = EFI_NOT_FOUND;
 
@@ -911,7 +932,7 @@ UsbNicSearchUsbIo (
     }
 
     // Compare these two device paths
-    Length = (UINTN)(UINT8 *)ThisDevicePathEnd + DevicePathNodeLength (ThisDevicePathEnd) - (UINTN)(UINT8 *)ThisDevicePath;
+    Length = (UINT16)((UINTN)(UINT8 *)ThisDevicePathEnd + DevicePathNodeLength (ThisDevicePathEnd) - (UINTN)(UINT8 *)ThisDevicePath);
     if (Length != ((UINTN)(UINT8 *)ThisUsbDevicePathEnd + DevicePathNodeLength (ThisUsbDevicePathEnd) - (UINTN)(UINT8 *)ThisUsbDevicePath)) {
       continue;
     }
@@ -923,7 +944,7 @@ UsbNicSearchUsbIo (
           ) == 0)
     {
       Status = EFI_SUCCESS;
-      DEBUG ((DEBUG_INFO, "EFI handle with the correct UsbIo is found at #%d instance of UsbIo.\n", Index));
+      DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "EFI handle with the correct UsbIo is found at #%d instance of UsbIo.\n", Index));
       break;
     }
   }
@@ -1004,21 +1025,21 @@ IdentifyUsbNicBmcChannel (
     (VOID *)&Snp->Mode->CurrentAddress,
     BmcUsbNic->MacAddressSize
     );
-  DEBUG ((DEBUG_INFO, "    MAC address (in size %d) for this SNP instance:\n      ", BmcUsbNic->MacAddressSize));
+  DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "    MAC address (in size %d) for this SNP instance:\n      ", BmcUsbNic->MacAddressSize));
   for (Index = 0; Index < BmcUsbNic->MacAddressSize; Index++) {
-    DEBUG ((DEBUG_INFO, "%02x ", *(BmcUsbNic->MacAddress + Index)));
+    DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "%02x ", *(BmcUsbNic->MacAddress + Index)));
   }
 
-  DEBUG ((DEBUG_INFO, "\n"));
+  DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "\n"));
   BmcUsbNic->ThisSnp   = Snp;
   BmcUsbNic->ThisUsbIo = UsbIo;
 
   Status = HostInterfaceIpmiCheckMacAddress (BmcUsbNic);
   if (Status == EFI_SUCCESS) {
     BmcUsbNic->IsExposedByBmc = TRUE;
-    DEBUG ((DEBUG_INFO, "    BMC exposed USB NIC is found.\n"));
+    DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "    BMC exposed USB NIC is found.\n"));
   } else {
-    DEBUG ((DEBUG_INFO, "    BMC exposed USB NIC is not found.\n"));
+    DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "    BMC exposed USB NIC is not found.\n"));
   }
 
   InsertTailList (&mBmcUsbNic, &BmcUsbNic->NextInstance);
@@ -1047,6 +1068,7 @@ CheckBmcUsbNicOnHandles (
   UINTN                     Index;
   EFI_STATUS                Status;
   EFI_DEVICE_PATH_PROTOCOL  *DevicePath;
+  BOOLEAN                   GotOneUsbNIc;
 
   if ((HandleNumer == 0) || (HandleBuffer == NULL)) {
     return EFI_INVALID_PARAMETER;
@@ -1054,6 +1076,7 @@ CheckBmcUsbNicOnHandles (
 
   DEBUG ((DEBUG_INFO, "%a: Entry, #%d SNP handle\n", __FUNCTION__, HandleNumer));
 
+  GotOneUsbNIc = FALSE;
   for (Index = 0; Index < HandleNumer; Index++) {
     Status = gBS->HandleProtocol (
                     *(HandleBuffer + Index),
@@ -1070,6 +1093,7 @@ CheckBmcUsbNicOnHandles (
       if ((DevicePath->Type == MESSAGING_DEVICE_PATH) && (DevicePath->SubType == MSG_USB_DP)) {
         Status = IdentifyUsbNicBmcChannel (*(HandleBuffer + Index), DevicePath);
         if (!EFI_ERROR (Status)) {
+          GotOneUsbNIc = TRUE;
           break;
         }
       }
@@ -1079,6 +1103,10 @@ CheckBmcUsbNicOnHandles (
         break;
       }
     }
+  }
+
+  if (GotOneUsbNIc) {
+    return EFI_SUCCESS;
   }
 
   return EFI_NOT_FOUND;
@@ -1123,7 +1151,7 @@ CheckBmcUsbNic (
                   NULL
                   );
   if (Status == EFI_BUFFER_TOO_SMALL) {
-    DEBUG ((DEBUG_INFO, "    %d SNP protocol instances.\n", BufferSize/sizeof (EFI_HANDLE)));
+    DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "    %d SNP protocol instances.\n", BufferSize/sizeof (EFI_HANDLE)));
     HandleBuffer = AllocateZeroPool (BufferSize);
     if (HandleBuffer == NULL) {
       DEBUG ((DEBUG_ERROR, "    Falied to allocate buffer for the handles.\n"));
@@ -1148,20 +1176,21 @@ CheckBmcUsbNic (
 
   // Check USB NIC on handles.
   Status = CheckBmcUsbNicOnHandles (BufferSize/sizeof (EFI_HANDLE), HandleBuffer);
-  if ((Registration != NULL) && !EFI_ERROR (Status)) {
+  if (!EFI_ERROR (Status)) {
     // Retrieve the rest of BMC USB NIC information for Redfish over IP information
     // and USB Network Interface V2.
     Status = RetrievedBmcUsbNicInfo ();
-
-    DEBUG ((DEBUG_INFO, "    Install protocol to notify the platform Redfish Host Interface information is ready.\n"));
-    Status = gBS->InstallProtocolInterface (
-                    &Handle,
-                    &mPlatformHostInterfaceBmcUsbNicReadinessGuid,
-                    EFI_NATIVE_INTERFACE,
-                    NULL
-                    );
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "    Install protocol fail %r.\n", Status));
+    if (!EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "    Install protocol to notify the platform Redfish Host Interface information is ready.\n"));
+      Status = gBS->InstallProtocolInterface (
+                      &Handle,
+                      &mPlatformHostInterfaceBmcUsbNicReadinessGuid,
+                      EFI_NATIVE_INTERFACE,
+                      NULL
+                      );
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "    Install protocol fail %r.\n", Status));
+      }
     }
   }
 
@@ -1228,7 +1257,7 @@ RedfishPlatformHostInterfaceNotification (
   }
 
   if (Status == EFI_NOT_FOUND) {
-    DEBUG ((DEBUG_INFO, "%a: BMC USB NIC is not found. Register the notification.\n", __FUNCTION__));
+    DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "%a: BMC USB NIC is not found. Register the notification.\n", __FUNCTION__));
 
     // Register the notification of SNP installation.
     Status = gBS->CreateEvent (
