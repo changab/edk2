@@ -2317,6 +2317,10 @@
   # @Prompt Memory Address of GuidedExtractHandler Table.
   gEfiMdePkgTokenSpaceGuid.PcdGuidedExtractHandlerTableAddress|0x1000000|UINT64|0x30001015
 
+  ## This value is the IPMI KCS Interface I/O base address used to transmit IPMI commands.
+  # @Prompt IPMI KCS Interface I/O Base Address
+  gEfiMdePkgTokenSpaceGuid.PcdIpmiKcsBaseAddress|0xca2|UINT16|0x00000031
+
 [PcdsFixedAtBuild, PcdsPatchableInModule, PcdsDynamic, PcdsDynamicEx]
   ## This value is used to set the base address of PCI express hierarchy.
   # @Prompt PCI Express Base Address.
