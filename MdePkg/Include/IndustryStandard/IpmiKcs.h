@@ -67,6 +67,5 @@ typedef struct {
 typedef struct {
   UINT8  NetFunc;
   UINT8  Command;
-  UINT8  CompletionCode;
 } IPMI_KCS_RESPONSE_HEADER;
 #endif
