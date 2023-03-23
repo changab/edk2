@@ -1,41 +1,53 @@
 /** @file
 
-  The definitions of Management Component Transport Protocol (MCTP)
+  The definitions of DMTF Management Component Transport Protocol (MCTP)
   Base Specification.
 
   Copyright (C) 2023 Advanced Micro Devices, Inc. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
   @par Revision Reference:
-  Management Component Transport Protocol (MCTP) Base Specification
+  DMTF Management Component Transport Protocol (MCTP) Base Specification
   Version 1.3.1
+  https://www.dmtf.org/sites/default/files/standards/documents/DSP0236_1.3.1.pdf
 **/
 
 #ifndef MCTP_H_
 #define MCTP_H_
 
-#define MCTP_HEADER_VERSION 0x00
+///
+/// Definitions of endpoint ID
+///
+#define MCTP_NULL_DESTINATION_ENDPOINT_ID  0
+#define MCTP_NULL_SOURCE_ENDPOINT_ID       0
+#define MCTP_RESERVED_ENDPOINT_START_ID    1
+#define MCTP_RESERVED_ENDPOINT_END_ID      7
+#define MCTP_BROADCAST_ENDPOINT_ID         0xFF
+
+/// Minimum transmission size is 64 bytes.
+/// The value of 64 is defined in MCTP Base Specification.
+#define MCTP_BASELINE_MINIMUM_UNIT_TRANSMISSION_SIZE  0x40
 
 ///
-/// The 32-bit Transport Header of MCTP packet.
+/// The 32-bit Header of MCTP packet.
 ///
 typedef union {
   struct {
-    UINT8  HeaderVersion:4;          ///< The version of header.
-    UINT8  Reserved:4;               ///< Reserved for future definitions.
-    UINT8  DestinationEndpointId:8;  ///< Destination endpoint Id (EID).
-    UINT8  SourceEndpointIdId:8;     ///< Source endpoint Id (EID)
-    UINT8  MessageTag:3;             ///< Check the MCTP Base specification for the
-                                     ///< usages.
-    UINT8  TagOwner:1;               ///< Tag owner identifies the message was
-                                     ///< originated by the source EID or
-                                     ///< destination EID.
-    UINT8  PacketSequence:2;         ///< Sequence number increments Modulo 4 on
-                                     ///< each packet.
-    UINT8  EndOfMessage:1;           ///< Indicates the last packet of message.
-    UINT8  StartOfMessage:1;         ///< Indicates the first packet of message.
+    UINT8    HeaderVersion         : 4; ///< The version of header.
+    UINT8    Reserved              : 4; ///< Reserved for future definitions.
+    UINT8    DestinationEndpointId : 8; ///< Destination endpoint Id (EID).
+    UINT8    SourceEndpointIdId    : 8; ///< Source endpoint Id (EID)
+    UINT8    MessageTag            : 3; ///< Check the MCTP Base specification for the
+                                        ///< usages.
+    UINT8    TagOwner              : 1; ///< Tag owner identifies the message was
+                                        ///< originated by the source EID or
+                                        ///< destination EID.
+    UINT8    PacketSequence        : 2; ///< Sequence number increments Modulo 4 on
+                                        ///< each packet.
+    UINT8    EndOfMessage          : 1; ///< Indicates the last packet of message.
+    UINT8    StartOfMessage        : 1; ///< Indicates the first packet of message.
   } Bits;
-  UINT32     Header;
+  UINT32    Header;
 } MCTP_TRANSPORT_HEADER;
 
 ///
@@ -43,8 +55,8 @@ typedef union {
 ///
 typedef union {
   struct {
-    UINT8  MessageType:7;
-    UINT8  ItegrityCheck:1;
+    UINT8    MessageType   : 7;
+    UINT8    ItegrityCheck : 1;
   } Bits;
   UINT8    MessageHeader;
 } MCTP_MESSAGE_HEADER;
@@ -112,15 +124,15 @@ typedef union {
 ///
 typedef struct {
   struct {
-    UINT8  IntegrityCheck:1;  ///< Message integrity check.
-    UINT8  MessageType:7;     ///< Message type.
-    UINT8  RequestBit:1;      ///< Request bit.
-    UINT8  DatagramBit:1;     ///< Datagram bit.
-    UINT8  Reserved:1;        ///< Reserved bit.
-    UINT8  InstanceId:5;      ///< Instance ID.
-    UINT8  CommandCode:8;     ///< Command code.
-    UINT8  CompletionCode:8;  ///< Completion code.
+    UINT8    IntegrityCheck : 1; ///< Message integrity check.
+    UINT8    MessageType    : 7; ///< Message type.
+    UINT8    RequestBit     : 1; ///< Request bit.
+    UINT8    DatagramBit    : 1; ///< Datagram bit.
+    UINT8    Reserved       : 1; ///< Reserved bit.
+    UINT8    InstanceId     : 5; ///< Instance ID.
+    UINT8    CommandCode    : 8; ///< Command code of request message.
+    UINT8    CompletionCode : 8; ///< Completion code in response message.
   } Bits;
-  UINT32     BodyHeader;
+  UINT32    BodyHeader;
 } MCTP_CONTROL_MESSAGE;
 #endif
