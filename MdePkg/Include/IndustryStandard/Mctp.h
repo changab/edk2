@@ -14,27 +14,40 @@
 #ifndef MCTP_H_
 #define MCTP_H_
 
+#define MCTP_HEADER_VERSION 0x00
+
 ///
-/// The 32-bit Header of MCTP packet.
+/// The 32-bit Transport Header of MCTP packet.
 ///
 typedef union {
   struct {
-    UINT8  Reserved:4;               ///< Reserved for future definitions.
     UINT8  HeaderVersion:4;          ///< The version of header.
+    UINT8  Reserved:4;               ///< Reserved for future definitions.
     UINT8  DestinationEndpointId:8;  ///< Destination endpoint Id (EID).
     UINT8  SourceEndpointIdId:8;     ///< Source endpoint Id (EID)
-    UINT8  StartOfMessage:1;         ///< Indicates the first packet of message.
-    UINT8  EndOfMessage:1;           ///< Indicates the last packet of message.
-    UINT8  PacketSequence:2;         ///< Sequence number increments Modulo 4 on
-                                     ///< each packet.
+    UINT8  MessageTag:3;             ///< Check the MCTP Base specification for the
+                                     ///< usages.
     UINT8  TagOwner:1;               ///< Tag owner identifies the message was
                                      ///< originated by the source EID or
                                      ///< destination EID.
-    UINT8  MessageTag:3;             ///< Check the MCTP Base specification for the
-                                     ///< usages.
+    UINT8  PacketSequence:2;         ///< Sequence number increments Modulo 4 on
+                                     ///< each packet.
+    UINT8  EndOfMessage:1;           ///< Indicates the last packet of message.
+    UINT8  StartOfMessage:1;         ///< Indicates the first packet of message.
   } Bits;
   UINT32     Header;
-} MCTP_HEADER;
+} MCTP_TRANSPORT_HEADER;
+
+///
+/// The 8-bit Message Header of MCTP packet.
+///
+typedef union {
+  struct {
+    UINT8  MessageType:7;
+    UINT8  ItegrityCheck:1;
+  } Bits;
+  UINT8    MessageHeader;
+} MCTP_MESSAGE_HEADER;
 
 ///
 /// MCTP Control Commands
