@@ -24,43 +24,6 @@
 #define MCTP_RESERVED_ENDPOINT_END_ID      7
 #define MCTP_BROADCAST_ENDPOINT_ID         0xFF
 
-/// Minimum transmission size is 64 bytes.
-/// The value of 64 is defined in MCTP Base Specification.
-#define MCTP_BASELINE_MINIMUM_UNIT_TRANSMISSION_SIZE  0x40
-
-///
-/// The 32-bit Header of MCTP packet.
-///
-typedef union {
-  struct {
-    UINT8    HeaderVersion         : 4; ///< The version of header.
-    UINT8    Reserved              : 4; ///< Reserved for future definitions.
-    UINT8    DestinationEndpointId : 8; ///< Destination endpoint Id (EID).
-    UINT8    SourceEndpointIdId    : 8; ///< Source endpoint Id (EID)
-    UINT8    MessageTag            : 3; ///< Check the MCTP Base specification for the
-                                        ///< usages.
-    UINT8    TagOwner              : 1; ///< Tag owner identifies the message was
-                                        ///< originated by the source EID or
-                                        ///< destination EID.
-    UINT8    PacketSequence        : 2; ///< Sequence number increments Modulo 4 on
-                                        ///< each packet.
-    UINT8    EndOfMessage          : 1; ///< Indicates the last packet of message.
-    UINT8    StartOfMessage        : 1; ///< Indicates the first packet of message.
-  } Bits;
-  UINT32    Header;
-} MCTP_TRANSPORT_HEADER;
-
-///
-/// The 8-bit Message Header of MCTP packet.
-///
-typedef union {
-  struct {
-    UINT8    MessageType   : 7;
-    UINT8    ItegrityCheck : 1;
-  } Bits;
-  UINT8    MessageHeader;
-} MCTP_MESSAGE_HEADER;
-
 ///
 /// MCTP Control Commands
 ///
@@ -124,15 +87,53 @@ typedef union {
 ///
 typedef struct {
   struct {
-    UINT8    IntegrityCheck : 1; ///< Message integrity check.
-    UINT8    MessageType    : 7; ///< Message type.
-    UINT8    RequestBit     : 1; ///< Request bit.
-    UINT8    DatagramBit    : 1; ///< Datagram bit.
-    UINT8    Reserved       : 1; ///< Reserved bit.
-    UINT8    InstanceId     : 5; ///< Instance ID.
-    UINT8    CommandCode    : 8; ///< Command code of request message.
-    UINT8    CompletionCode : 8; ///< Completion code in response message.
+    UINT32    MessageType    : 7; ///< Message type.
+    UINT32    IntegrityCheck : 1; ///< Message integrity check.
+    UINT32    InstanceId     : 5; ///< Instance ID.
+    UINT32    Reserved       : 1; ///< Reserved bit.
+    UINT32    DatagramBit    : 1; ///< Datagram bit.
+    UINT32    RequestBit     : 1; ///< Request bit.
+    UINT32    CommandCode    : 8; ///< Command code of request message.
+    UINT32    CompletionCode : 8; ///< Completion code in response message.
   } Bits;
   UINT32    BodyHeader;
 } MCTP_CONTROL_MESSAGE;
+
+/// Minimum transmission size is 64 bytes.
+/// The value of 64 is defined in MCTP Base Specification.
+#define MCTP_BASELINE_MINIMUM_UNIT_TRANSMISSION_SIZE  0x40
+
+///
+/// The 32-bit Header of MCTP packet.
+///
+typedef union {
+  struct {
+    UINT32    HeaderVersion         : 4; ///< The version of header.
+    UINT32    Reserved              : 4; ///< Reserved for future definitions.
+    UINT32    DestinationEndpointId : 8; ///< Destination endpoint Id (EID).
+    UINT32    SourceEndpointIdId    : 8; ///< Source endpoint Id (EID)
+    UINT32    MessageTag            : 3; ///< Check the MCTP Base specification for the
+                                         ///< usages.
+    UINT32    TagOwner              : 1; ///< Tag owner identifies the message was
+                                         ///< originated by the source EID or
+                                         ///< destination EID.
+    UINT32    PacketSequence        : 2; ///< Sequence number increments Modulo 4 on
+                                         ///< each packet.
+    UINT32    EndOfMessage          : 1; ///< Indicates the last packet of message.
+    UINT32    StartOfMessage        : 1; ///< Indicates the first packet of message.
+  } Bits;
+  UINT32    Header;
+} MCTP_TRANSPORT_HEADER;
+
+///
+/// The 8-bit Message Header of MCTP packet.
+///
+typedef union {
+  struct {
+    UINT8    MessageType    : 7;
+    UINT8    IntegrityCheck : 1;
+  } Bits;
+  UINT8    MessageHeader;
+} MCTP_MESSAGE_HEADER;
+
 #endif
