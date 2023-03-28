@@ -51,10 +51,10 @@
 /// KCS Interface State Bit
 ///
 typedef enum {
-  IPMI_KCS_IDLE_STATE = 0,
-  IPMI_KCS_READ_STATE,
-  IPMI_KCS_WRITE_STATE,
-  IPMI_KCS_ERROR_STATE
+  IpmiKcsIdleState = 0,
+  IpmiKcsReadState,
+  IpmiKcsWriteState,
+  IpmiKcsErrorState
 } IPMI_KCS_STATE;
 
 ///
