@@ -122,6 +122,20 @@ typedef EFI_STATUS
   );
 
 ///
+///
+/// Definitions of SPI Host Controller Attributes.
+///
+#define HC_SUPPORTS_WRITE_ONLY_OPERATIONS       BIT0
+#define HC_SUPPORTS_READ_ONLY_OPERATIONS        BIT1
+#define HC_SUPPORTS_WRITE_THEN_READ_OPERATIONS  BIT2
+#define HC_TX_FRAME_IN_MOST_SIGNIFICANT_BITS    BIT3
+#define HC_RX_FRAME_IN_MOST_SIGNIFICANT_BITS    BIT4
+#define HC_SUPPORTS_2_BIT_DATA_BUS_WIDTH        BIT5
+#define HC_SUPPORTS_4_BIT_DATA_BUS_WIDTH        BIT6
+#define HC_SUPPORTS_8_BIT_DATA_BUS_WIDTH        BIT7
+#define HC_TRANSFER_SIZE_INCLUDES_OPCODE        BIT8
+#define HC_TRANSFER_SIZE_INCLUDES_ADDRESS       BIT9
+///
 /// Support a SPI data transaction between the SPI controller and a SPI chip.
 ///
 struct _EFI_SPI_HC_PROTOCOL {

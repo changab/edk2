@@ -224,6 +224,16 @@ typedef struct _EFI_SPI_BUS_TRANSACTION {
 } EFI_SPI_BUS_TRANSACTION;
 
 ///
+///
+/// Definitions of SPI I/O Attributes.
+///
+#define SPI_IO_SUPPORTS_2_BIT_DATA_BUS_WIDTH   BIT0
+#define SPI_IO_SUPPORTS_4_BIT_DATA_BUS_WIDTH   BIT1
+#define SPI_IO_SUPPORTS_8_BIT_DATA_BUS_WIDTH   BIT2
+#define SPI_IO_TRANSFER_SIZE_INCLUDES_OPCODE   BIT3
+#define SPI_IO_TRANSFER_SIZE_INCLUDES_ADDRESS  BIT4
+
+///
 /// Support managed SPI data transactions between the SPI controller and a SPI
 /// chip.
 ///
