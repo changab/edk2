@@ -4,8 +4,6 @@
 
   Copyright (C) 2023 Advanced Micro Devices, Inc. All rights reserved.
 
-  SPDX-License-Identifier: BSD-2-Clause-Patent
-
   @par Revision Reference:
     - JEDEC Standard, JESD216F.02
       https://www.jedec.org/document_search?search_api_views_fulltext=JESD216
