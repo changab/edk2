@@ -17,6 +17,7 @@
 #  buffer overflow, integer overflow.
 #
 # Copyright (c) 2015 - 2019, Intel Corporation. All rights reserved.<BR>
+# Copyright (C) 2023 Advanced Micro Devices, Inc. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -45,6 +46,9 @@
   MdeModulePkg/MdeModulePkg.dec
   SecurityPkg/SecurityPkg.dec
   CryptoPkg/CryptoPkg.dec
+  AgesaPkg/AgesaPkg.dec
+  AgesaModulePkg/AgesaCommonModulePkg.dec
+  AgesaModulePkg/AgesaModulePspPkg.dec
 
 [LibraryClasses]
   MemoryAllocationLib
@@ -64,6 +68,7 @@
   ReportStatusCodeLib
   Tcg2PhysicalPresenceLib
   PeCoffLib
+  AmdPspMboxLibV2
 
 [Guids]
   ## SOMETIMES_CONSUMES     ## Variable:L"SecureBoot"

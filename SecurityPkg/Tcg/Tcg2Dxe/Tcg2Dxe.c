@@ -3,6 +3,7 @@
 
 Copyright (c) 2015 - 2019, Intel Corporation. All rights reserved.<BR>
 (C) Copyright 2016 Hewlett Packard Enterprise Development LP<BR>
+Copyright (C) 2023 Advanced Micro Devices, Inc. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -44,7 +45,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/PerformanceLib.h>
 #include <Library/ReportStatusCodeLib.h>
 #include <Library/Tcg2PhysicalPresenceLib.h>
-
+#include <Library/AmdPspMboxLibV2.h>
 #define PERF_ID_TCG2_DXE  0x3120
 
 typedef struct {
@@ -1536,6 +1537,71 @@ EFI_TCG2_PROTOCOL  mTcg2Protocol = {
 };
 
 /**
+  Check whether PSP measurement data is present and save it into TCG log
+
+  @retval TRUE    PSP measurement data is present
+  @retval FALSE   PSP measurement data is not present
+
+**/
+BOOLEAN
+IsAmdTcgLogPresent (
+  VOID
+  )
+{
+  EFI_STATUS                  Status;
+  UINT32                      DesiredConfig;
+  UINT32                      ConfigStatus;
+  UINT32                      LogDataSize;
+  UINT8                       LogData[0x1000];
+  UINT8                       *Buffer;
+  TCG_PCR_EVENT_HDR           *TcgPcrEventPtr;
+  TCG_PCR_EVENT2_HDR          *TcgPcrEvent2Ptr;
+  UINT32                      EventHdrSize;
+  UINT32                      EventSize;
+
+  LogDataSize = sizeof (LogData);
+  Status = PspMboxGetDTPMData (&DesiredConfig, &ConfigStatus, &LogDataSize, LogData);
+  if (!EFI_ERROR(Status)) {
+    DEBUG((DEBUG_INFO, "DesiredConfig = 0x%x, ConfigStatus = 0x%x, LogDataSize = 0x%x\n", DesiredConfig, ConfigStatus, LogDataSize));
+    if ((DesiredConfig != 0) && (LogDataSize != 0)) {
+      Buffer = &LogData[0];
+      TcgPcrEventPtr = (TCG_PCR_EVENT_HDR *)Buffer;
+      Status = TcgDxeLogEvent (
+                 EFI_TCG2_EVENT_LOG_FORMAT_TCG_2,
+                 TcgPcrEventPtr,
+                 sizeof (TCG_PCR_EVENT_HDR),
+                 &LogData[sizeof (TCG_PCR_EVENT_HDR)],
+                 TcgPcrEventPtr->EventSize
+                 );
+      Buffer = &LogData[sizeof (TCG_PCR_EVENT_HDR) + TcgPcrEventPtr->EventSize];
+
+      while (Buffer < &LogData[LogDataSize]) {
+        TcgPcrEvent2Ptr = (TCG_PCR_EVENT2_HDR *)Buffer;
+        EventHdrSize = sizeof (TcgPcrEvent2Ptr->PCRIndex) + sizeof (TcgPcrEvent2Ptr->EventType) + sizeof (TcgPcrEvent2Ptr->Digests.count) +
+            sizeof (TcgPcrEvent2Ptr->Digests.digests[0].hashAlg) + sizeof (TcgPcrEvent2Ptr->Digests.digests[0].digest.sha256);
+        Buffer += EventHdrSize;
+        EventSize = *(UINT32 *)Buffer;
+        EventHdrSize += sizeof (TcgPcrEvent2Ptr->EventSize);
+        Buffer += sizeof (TcgPcrEvent2Ptr->EventSize);
+        Status = TcgDxeLogEvent (
+                   EFI_TCG2_EVENT_LOG_FORMAT_TCG_2,
+                   TcgPcrEvent2Ptr,
+                   EventHdrSize,
+                   Buffer,
+                   EventSize
+                   );
+        Buffer += EventSize;
+      }
+      return TRUE;
+    }
+  } else {
+    DEBUG((DEBUG_INFO, "PspMboxGetDTPMData Fail!!! Status = %r\n", Status));
+  }
+
+  return FALSE;
+}
+
+/**
   Initialize the Event Log and log events passed from the PEI phase.
 
   @retval EFI_SUCCESS           Operation completed successfully.
@@ -1618,9 +1684,9 @@ SetupEventLog (
       //
       SetMem ((VOID *)(UINTN)Lasa, PcdGet32 (PcdTcgLogAreaMinLen), 0xFF);
       //
-      // Create first entry for Log Header Entry Data
+      // Create first entry for Log Header Entry Data unless PSP already created it
       //
-      if (mTcg2EventInfo[Index].LogFormat != EFI_TCG2_EVENT_LOG_FORMAT_TCG_1_2) {
+      if ((mTcg2EventInfo[Index].LogFormat != EFI_TCG2_EVENT_LOG_FORMAT_TCG_1_2) && !IsAmdTcgLogPresent ()) {
         //
         // TcgEfiSpecIdEventStruct
         //
