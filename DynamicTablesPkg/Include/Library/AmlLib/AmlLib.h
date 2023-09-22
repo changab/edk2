@@ -1692,4 +1692,64 @@ AmlCodeGenRdWordIo (
   OUT       AML_DATA_NODE_HANDLE    *NewRdNode  OPTIONAL
   );
 
+/** Create a _OST method for AMD platform.
+
+  Method (_OST, 3, Serialized)
+  {
+     \_SB.host (Arg0, Arg1, BRB, _ADR)
+  }
+
+  @ingroup CodeGenApis
+
+  @param [in]  DeviceNode         DeviceNode object
+
+  @retval EFI_SUCCESS             The function completed successfully.
+  @retval EFI_STATUS              Other failure
+**/
+EFI_STATUS
+EFIAPI
+AmdAmlCodeGenMethodInvokeMethodOst (
+  IN OUT AML_OBJECT_NODE_HANDLE  DeviceNode
+  );
+
+/** Create a _DSM method for AMD platform.
+
+  Method (_DSM, 4, Serialized)
+  {
+     \_SB.HDSM (Arg0, Arg1, Arg2, Arg3, BRB, _ADR, RSTR)
+  }
+
+  @ingroup CodeGenApis
+
+  @param [in]  DeviceNode         DeviceNode object
+
+  @retval EFI_SUCCESS             The function completed successfully.
+  @retval EFI_STATUS              Other failure
+**/
+EFI_STATUS
+EFIAPI
+AmdAmlCodeGenMethodInvokeMethodDsm (
+  IN OUT AML_OBJECT_NODE_HANDLE  DeviceNode
+  );
+
+/** Create a _OSC method for AMD platform.
+
+  Method (_OSC, 4, NotSerialized, 4)  // _OSC: Operating System Capabilities
+  {
+    Return (\_SB.OSCI (Arg0, Arg1, Arg2, Arg3))
+  }
+
+  @ingroup CodeGenApis
+
+  @param [in]  DeviceNode         DeviceNode object
+
+  @retval EFI_SUCCESS             The function completed successfully.
+  @retval EFI_STATUS              Other failure
+**/
+EFI_STATUS
+EFIAPI
+AmdAmlCodeGenMethodInvokeMethodOsc (
+  IN OUT AML_OBJECT_NODE_HANDLE  DeviceNode
+  );
+
 #endif // AML_LIB_H_

@@ -3849,3 +3849,777 @@ exit_handler:
 
   return Status;
 }
+
+/** Create a _OST method for AMD platform.
+
+  Method (_OST, 3, Serialized)
+  {
+     \_SB.host (Arg0, Arg1, BRB, _ADR)
+  }
+
+  @ingroup CodeGenApis
+
+  @param [in]  DeviceNode         DeviceNode object
+
+  @retval EFI_SUCCESS             The function completed successfully.
+  @retval EFI_STATUS              Other failure
+**/
+EFI_STATUS
+EFIAPI
+AmdAmlCodeGenMethodInvokeMethodOst (
+  IN OUT AML_OBJECT_NODE_HANDLE  DeviceNode
+  )
+{
+  EFI_STATUS              Status;
+  AML_OBJECT_NODE_HANDLE  MethodNode;
+  AML_DATA_NODE           *DataNode;
+  CHAR8                   *AmlNameString;
+  UINT32                  AmlNameStringSize;
+
+  // Create a Method named MethodNameString
+  Status = AmlCodeGenMethod (
+             "_OST",
+             3,
+             TRUE,
+             0,
+             NULL,
+             &MethodNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    return Status;
+  }
+
+  DataNode = NULL;
+
+  Status = ConvertAslNameToAmlName ("\\_SB.HOST", &AmlNameString);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    return Status;
+  }
+
+  Status = AmlGetNameStringSize (AmlNameString, &AmlNameStringSize);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlCreateDataNode (
+             EAmlNodeDataTypeNameString,
+             (UINT8 *)AmlNameString,
+             AmlNameStringSize,
+             &DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlVarListAddTail (
+             (AML_NODE_HEADER *)MethodNode,
+             (AML_NODE_HEADER *)DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  DataNode = NULL;
+
+  AmlNameStringSize = AML_ARG0;
+  Status            = AmlCreateDataNode (
+                        EAmlNodeDataTypeUInt,
+                        (UINT8 *)&AmlNameStringSize,
+                        1,
+                        &DataNode
+                        );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlVarListAddTail (
+             (AML_NODE_HEADER *)MethodNode,
+             (AML_NODE_HEADER *)DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  DataNode = NULL;
+
+  AmlNameStringSize = AML_ARG1;
+  Status            = AmlCreateDataNode (
+                        EAmlNodeDataTypeUInt,
+                        (UINT8 *)&AmlNameStringSize,
+                        1,
+                        &DataNode
+                        );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlVarListAddTail (
+             (AML_NODE_HEADER *)MethodNode,
+             (AML_NODE_HEADER *)DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  DataNode = NULL;
+  Status   = ConvertAslNameToAmlName ("BRB", &AmlNameString);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    return Status;
+  }
+
+  Status = AmlGetNameStringSize (AmlNameString, &AmlNameStringSize);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlCreateDataNode (
+             EAmlNodeDataTypeNameString,
+             (UINT8 *)AmlNameString,
+             AmlNameStringSize,
+             &DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlVarListAddTail (
+             (AML_NODE_HEADER *)MethodNode,
+             (AML_NODE_HEADER *)DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  DataNode = NULL;
+  Status   = ConvertAslNameToAmlName ("_ADR", &AmlNameString);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    return Status;
+  }
+
+  Status = AmlGetNameStringSize (AmlNameString, &AmlNameStringSize);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlCreateDataNode (
+             EAmlNodeDataTypeNameString,
+             (UINT8 *)AmlNameString,
+             AmlNameStringSize,
+             &DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlVarListAddTail (
+             (AML_NODE_HEADER *)MethodNode,
+             (AML_NODE_HEADER *)DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  DataNode = NULL;
+
+  Status = AmlVarListAddTail ((AML_NODE_HEADER *)DeviceNode, (AML_NODE_HEADER *)MethodNode);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  return Status;
+
+exit_handler:
+  if (MethodNode != NULL) {
+    AmlDeleteTree ((AML_NODE_HANDLE)MethodNode);
+  }
+
+  if (AmlNameString != NULL) {
+    FreePool (AmlNameString);
+  }
+
+  return Status;
+}
+
+/** Create a _DSM method for AMD platform.
+
+  Method (_DSM, 4, Serialized)
+  {
+     \_SB.HDSM (Arg0, Arg1, Arg2, Arg3, BRB, _ADR, RSTR)
+  }
+
+  @ingroup CodeGenApis
+
+  @param [in]  DeviceNode         DeviceNode object
+
+  @retval EFI_SUCCESS             The function completed successfully.
+  @retval EFI_STATUS              Other failure
+**/
+EFI_STATUS
+EFIAPI
+AmdAmlCodeGenMethodInvokeMethodDsm (
+  IN OUT AML_OBJECT_NODE_HANDLE  DeviceNode
+  )
+{
+  EFI_STATUS              Status;
+  AML_OBJECT_NODE_HANDLE  MethodNode;
+  AML_DATA_NODE           *DataNode;
+  CHAR8                   *AmlNameString;
+  UINT32                  AmlNameStringSize;
+
+  // Create a Method named MethodNameString
+  Status = AmlCodeGenMethod (
+             "_DSM",
+             4,
+             TRUE,
+             0,
+             NULL,
+             &MethodNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    return Status;
+  }
+
+  DataNode = NULL;
+
+  Status = ConvertAslNameToAmlName ("\\_SB.HDSM", &AmlNameString);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    return Status;
+  }
+
+  Status = AmlGetNameStringSize (AmlNameString, &AmlNameStringSize);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlCreateDataNode (
+             EAmlNodeDataTypeNameString,
+             (UINT8 *)AmlNameString,
+             AmlNameStringSize,
+             &DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlVarListAddTail (
+             (AML_NODE_HEADER *)MethodNode,
+             (AML_NODE_HEADER *)DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  DataNode = NULL;
+
+  AmlNameStringSize = AML_ARG0;
+  Status            = AmlCreateDataNode (
+                        EAmlNodeDataTypeUInt,
+                        (UINT8 *)&AmlNameStringSize,
+                        1,
+                        &DataNode
+                        );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlVarListAddTail (
+             (AML_NODE_HEADER *)MethodNode,
+             (AML_NODE_HEADER *)DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  DataNode = NULL;
+
+  AmlNameStringSize = AML_ARG1;
+  Status            = AmlCreateDataNode (
+                        EAmlNodeDataTypeUInt,
+                        (UINT8 *)&AmlNameStringSize,
+                        1,
+                        &DataNode
+                        );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlVarListAddTail (
+             (AML_NODE_HEADER *)MethodNode,
+             (AML_NODE_HEADER *)DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  DataNode = NULL;
+
+  AmlNameStringSize = AML_ARG2;
+  Status            = AmlCreateDataNode (
+                        EAmlNodeDataTypeUInt,
+                        (UINT8 *)&AmlNameStringSize,
+                        1,
+                        &DataNode
+                        );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlVarListAddTail (
+             (AML_NODE_HEADER *)MethodNode,
+             (AML_NODE_HEADER *)DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  DataNode = NULL;
+
+  AmlNameStringSize = AML_ARG3;
+  Status            = AmlCreateDataNode (
+                        EAmlNodeDataTypeUInt,
+                        (UINT8 *)&AmlNameStringSize,
+                        1,
+                        &DataNode
+                        );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlVarListAddTail (
+             (AML_NODE_HEADER *)MethodNode,
+             (AML_NODE_HEADER *)DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  DataNode = NULL;
+  Status   = ConvertAslNameToAmlName ("BRB", &AmlNameString);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    return Status;
+  }
+
+  Status = AmlGetNameStringSize (AmlNameString, &AmlNameStringSize);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlCreateDataNode (
+             EAmlNodeDataTypeNameString,
+             (UINT8 *)AmlNameString,
+             AmlNameStringSize,
+             &DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlVarListAddTail (
+             (AML_NODE_HEADER *)MethodNode,
+             (AML_NODE_HEADER *)DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  DataNode = NULL;
+  Status   = ConvertAslNameToAmlName ("_ADR", &AmlNameString);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    return Status;
+  }
+
+  Status = AmlGetNameStringSize (AmlNameString, &AmlNameStringSize);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlCreateDataNode (
+             EAmlNodeDataTypeNameString,
+             (UINT8 *)AmlNameString,
+             AmlNameStringSize,
+             &DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlVarListAddTail (
+             (AML_NODE_HEADER *)MethodNode,
+             (AML_NODE_HEADER *)DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  DataNode = NULL;
+  Status   = ConvertAslNameToAmlName ("RSTR", &AmlNameString);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    return Status;
+  }
+
+  Status = AmlGetNameStringSize (AmlNameString, &AmlNameStringSize);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlCreateDataNode (
+             EAmlNodeDataTypeNameString,
+             (UINT8 *)AmlNameString,
+             AmlNameStringSize,
+             &DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlVarListAddTail (
+             (AML_NODE_HEADER *)MethodNode,
+             (AML_NODE_HEADER *)DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  DataNode = NULL;
+
+  Status = AmlVarListAddTail ((AML_NODE_HEADER *)DeviceNode, (AML_NODE_HEADER *)MethodNode);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  return Status;
+
+exit_handler:
+  if (MethodNode != NULL) {
+    AmlDeleteTree ((AML_NODE_HANDLE)MethodNode);
+  }
+
+  if (AmlNameString != NULL) {
+    FreePool (AmlNameString);
+  }
+
+  return Status;
+}
+
+/** Create a _OSC method for AMD platform.
+
+  Method (_OSC, 4, NotSerialized, 4)  // _OSC: Operating System Capabilities
+  {
+    Return (\_SB.OSCI (Arg0, Arg1, Arg2, Arg3))
+  }
+
+  @ingroup CodeGenApis
+
+  @param [in]  DeviceNode         DeviceNode object
+
+  @retval EFI_SUCCESS             The function completed successfully.
+  @retval EFI_STATUS              Other failure
+**/
+EFI_STATUS
+EFIAPI
+AmdAmlCodeGenMethodInvokeMethodOsc (
+  IN OUT AML_OBJECT_NODE_HANDLE  DeviceNode
+  )
+{
+  EFI_STATUS              Status;
+  AML_OBJECT_NODE_HANDLE  MethodNode;
+  AML_DATA_NODE           *DataNode;
+  CHAR8                   *AmlNameString;
+  UINT32                  AmlNameStringSize;
+
+  // Create a Method named MethodNameString
+  Status = AmlCodeGenMethod (
+             "_OSC",
+             4,
+             FALSE,
+             4,
+             NULL,
+             &MethodNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    return Status;
+  }
+
+  DataNode = NULL;
+
+  Status = ConvertAslNameToAmlName ("\\_SB.OSCI", &AmlNameString);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    return Status;
+  }
+
+  Status = AmlGetNameStringSize (AmlNameString, &AmlNameStringSize);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlCreateDataNode (
+             EAmlNodeDataTypeNameString,
+             (UINT8 *)AmlNameString,
+             AmlNameStringSize,
+             &DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlVarListAddTail (
+             (AML_NODE_HEADER *)MethodNode,
+             (AML_NODE_HEADER *)DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  DataNode = NULL;
+
+  AmlNameStringSize = AML_ARG0;
+  Status            = AmlCreateDataNode (
+                        EAmlNodeDataTypeUInt,
+                        (UINT8 *)&AmlNameStringSize,
+                        1,
+                        &DataNode
+                        );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlVarListAddTail (
+             (AML_NODE_HEADER *)MethodNode,
+             (AML_NODE_HEADER *)DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  DataNode = NULL;
+
+  AmlNameStringSize = AML_ARG1;
+  Status            = AmlCreateDataNode (
+                        EAmlNodeDataTypeUInt,
+                        (UINT8 *)&AmlNameStringSize,
+                        1,
+                        &DataNode
+                        );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlVarListAddTail (
+             (AML_NODE_HEADER *)MethodNode,
+             (AML_NODE_HEADER *)DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  DataNode = NULL;
+
+  AmlNameStringSize = AML_ARG2;
+  Status            = AmlCreateDataNode (
+                        EAmlNodeDataTypeUInt,
+                        (UINT8 *)&AmlNameStringSize,
+                        1,
+                        &DataNode
+                        );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlVarListAddTail (
+             (AML_NODE_HEADER *)MethodNode,
+             (AML_NODE_HEADER *)DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  DataNode = NULL;
+
+  AmlNameStringSize = AML_ARG3;
+  Status            = AmlCreateDataNode (
+                        EAmlNodeDataTypeUInt,
+                        (UINT8 *)&AmlNameStringSize,
+                        1,
+                        &DataNode
+                        );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlVarListAddTail (
+             (AML_NODE_HEADER *)MethodNode,
+             (AML_NODE_HEADER *)DataNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  Status = AmlVarListAddTail ((AML_NODE_HEADER *)DeviceNode, (AML_NODE_HEADER *)MethodNode);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto exit_handler;
+  }
+
+  return Status;
+
+exit_handler:
+  if (MethodNode != NULL) {
+    AmlDeleteTree ((AML_NODE_HANDLE)MethodNode);
+  }
+
+  if (AmlNameString != NULL) {
+    FreePool (AmlNameString);
+  }
+
+  return Status;
+}
+
+/** Add an integer value to Package node.
+
+  AmlCodeGenNamePackage ("_CID", NULL, &PackageNode);
+  AmlGetEisaIdFromString ("PNP0A03", &EisaId);
+  AmlAddIntegerPackageEntry (EisaId, PackageNameNode);
+  AmlGetEisaIdFromString ("PNP0A08", &EisaId);
+  AmlAddIntegerPackageEntry (EisaId, PackageNameNode);
+
+  equivalent of the following ASL code:
+  Name (_CID, Package (0x02)  // _CID: Compatible ID
+  {
+      EisaId ("PNP0A03"),
+      EisaId ("PNP0A08")
+  })
+
+  The package is added at the tail of the list of the input package node
+  name:
+    Name ("NamePackageNode", Package () {
+      [Pre-existing package entries],
+      [Newly created integer entry]
+    })
+
+
+  @ingroup CodeGenApis
+
+  @param [in]  Integer          Integer value that need to be added to package node.
+  @param [in]  PackageNameNode  Prt Named node to add the object to ....
+
+  @retval EFI_SUCCESS             Success.
+  @retval EFI_INVALID_PARAMETER   Invalid parameter.
+  @retval EFI_OUT_OF_RESOURCES    Failed to allocate memory.
+**/
+EFI_STATUS
+EFIAPI
+AmlAddIntegerPackageEntry (
+  IN        UINT64                   Integer,
+  IN        AML_OBJECT_NODE_HANDLE   PackageNameNode
+  )
+{
+  EFI_STATUS       Status;
+  AML_OBJECT_NODE  *ObjectNode;
+  AML_OBJECT_NODE  *PackageEntryList;
+
+  if (PackageNameNode == NULL)
+  {
+    ASSERT_EFI_ERROR (FALSE);
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if ((PackageNameNode == NULL)     ||
+      (AmlGetNodeType ((AML_NODE_HANDLE)PackageNameNode) != EAmlNodeObject) ||
+      (!AmlNodeHasOpCode (PackageNameNode, AML_NAME_OP, 0)))
+  {
+    ASSERT_EFI_ERROR (FALSE);
+    return EFI_INVALID_PARAMETER;
+  }
+
+  PackageEntryList = (AML_OBJECT_NODE_HANDLE)AmlGetFixedArgument (
+                                           PackageNameNode,
+                                           EAmlParseIndexTerm1
+                                           );
+  if ((PackageEntryList == NULL)                                              ||
+      (AmlGetNodeType ((AML_NODE_HANDLE)PackageEntryList) != EAmlNodeObject)  ||
+      (!AmlNodeHasOpCode (PackageEntryList, AML_PACKAGE_OP, 0)))
+  {
+    ASSERT_EFI_ERROR (FALSE);
+    return EFI_INVALID_PARAMETER;
+  }
+
+  Status = AmlCodeGenInteger (Integer, &ObjectNode);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    return Status;
+  }
+
+  Status = AmlVarListAddTail (
+             (AML_NODE_HANDLE)PackageEntryList,
+             (AML_NODE_HANDLE)ObjectNode
+             );
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto error_handler;
+  }
+  return Status;
+
+error_handler:
+  if (ObjectNode != NULL) {
+    AmlDeleteTree ((AML_NODE_HANDLE)ObjectNode);
+  }
+
+  return Status;
+}
