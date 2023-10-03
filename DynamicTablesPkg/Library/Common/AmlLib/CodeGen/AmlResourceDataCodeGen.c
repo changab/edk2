@@ -870,7 +870,7 @@ AmlCodeGenRdWordBusNumber (
            (UINT16) AddressMinimum,
            (UINT16) AddressMaximum,
            (UINT16) AddressTranslation,
-           RangeLength,
+           (UINT16) RangeLength,
            ResourceSourceIndex,
            ResourceSource,
            NameOpNode,
