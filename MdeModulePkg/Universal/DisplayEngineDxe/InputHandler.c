@@ -1,8 +1,11 @@
+/**
+   Copyright (C) 2023 Advanced Micro Devices, Inc. All rights reserved.
+**/
+
 /** @file
 Implementation for handling user input from the User Interfaces.
 
 Copyright (c) 2004 - 2018, Intel Corporation. All rights reserved.<BR>
-Copyright (C) 2023 Advanced Micro Devices, Inc. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/

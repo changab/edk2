@@ -1,3 +1,7 @@
+#
+# Copyright (C) 2023 Advanced Micro Devices, Inc. All rights reserved.
+#
+
 ## @file
 #  Produces Tcg2 protocol and measure boot environment
 #
@@ -17,7 +21,6 @@
 #  buffer overflow, integer overflow.
 #
 # Copyright (c) 2015 - 2019, Intel Corporation. All rights reserved.<BR>
-# Copyright (C) 2023 Advanced Micro Devices, Inc. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##

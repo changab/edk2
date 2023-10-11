@@ -1,9 +1,12 @@
+/**
+   Copyright (C) 2023 Advanced Micro Devices, Inc. All rights reserved.
+**/
+
 /** @file
   This module implements Tcg2 Protocol.
 
 Copyright (c) 2015 - 2019, Intel Corporation. All rights reserved.<BR>
 (C) Copyright 2016 Hewlett Packard Enterprise Development LP<BR>
-Copyright (C) 2023 Advanced Micro Devices, Inc. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
