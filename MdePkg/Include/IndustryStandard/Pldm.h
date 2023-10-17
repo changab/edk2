@@ -18,7 +18,10 @@
 
 #pragma pack(1)
 
-#define PLDM_MESSAGE_HEADER_VERSION  0
+#define PLDM_MESSAGE_HEADER_VERSION    0
+#define PLDM_TERMINUS_ID_SPECIAL       0
+#define PLDM_TERMINUS_ID_RESERVED      0xff
+#define PLDM_TERMINUS_ID_UNASSIGNED    PLDM_TERMINUS_ID_SPECIAL
 
 ///
 /// General definitions from Platform Level Data Model (PLDM) Base
