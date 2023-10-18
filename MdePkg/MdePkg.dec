@@ -2244,13 +2244,20 @@
   #  0xFFFFFFFF:  Maximum retry value
   #
   # @Prompt SPI NOR Flash Operation Retry Value
-  gEfiMdePkgTokenSpaceGuid.PcdSpiNorFlashOperationRetryCount|0xFFFFFFFF|UINT32|0x30001019
+  gEfiMdePkgTokenSpaceGuid.PcdSpiNorFlashOperationRetryCount|0x00000003|UINT32|0x30001019
+
+  ## SPI NOR Flash operation retry counts for the fixed timeout value
+  #  0x00000000:  No retry
+  #  0xFFFFFFFF:  Maximum retry value
+  #
+  # @Prompt SPI NOR Flash Operation Retry Value for the Fixed Timeout Value
+  gEfiMdePkgTokenSpaceGuid.PcdSpiNorFlashFixedTimeoutRetryCount|0x0000FFFF|UINT32|0x3000101A
 
   ## SPI NOR Flash operation delay in microseconds
-  #  Deafult is set to 0x0000000f microseconds
+  #  Deafult is set to 0x00000010 microseconds
   #
-  # @Prompt SPI NOR Flash Operation Delay in Microseconds
-  gEfiMdePkgTokenSpaceGuid.PcdSpiNorFlashOperationDelayMicroseconds|0x0000000F|UINT32|0x3000101A
+  # @Prompt SPI NOR Flash Operation Delay in Microseconds (16 us)
+  gEfiMdePkgTokenSpaceGuid.PcdSpiNorFlashOperationDelayMicroseconds|0x00000010|UINT32|0x3000101B
 
 [PcdsFixedAtBuild,PcdsPatchableInModule]
   ## Indicates the maximum length of unicode string used in the following
