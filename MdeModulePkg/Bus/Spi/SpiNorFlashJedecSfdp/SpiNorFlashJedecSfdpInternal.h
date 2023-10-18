@@ -236,7 +236,10 @@ SetSectorEraseBlockSize (
   @param[in, out] BlockCountToErase     Input  - The expected blocks to erase.
                                         Output - The determined number of blocks to erase.
   @param[out]     BlockEraseCommand     The erase command used for this continious blocks.
-
+  @param[out]     TypicalTime           Pointer to receive the typical time in millisecond
+                                        to erase this erase type size.
+  @param[out]     MaximumTimeout        Pointer to receive the maximum timeout in millisecond
+                                        to erase this erase type size.
   @retval EFI_SUCCESS          The erase block attribute is returned.
   @retval EFI_DEVICE_ERROR     No valid SFDP discovered.
   @retval EFI_NOT_FOUND        No valud erase block attribute found.
@@ -250,7 +253,9 @@ GetEraseBlockAttribute (
   IN     UINT32                     RemainingSize,
   IN OUT UINT32                     *BlockSizeToErase,
   IN OUT UINT32                     *BlockCountToErase,
-  OUT    UINT8                      *BlockEraseCommand
+  OUT    UINT8                      *BlockEraseCommand,
+  OUT    UINT32                    *TypicalTime,
+  OUT    UINT64                    *MaximumTimeout
   );
 
 /**

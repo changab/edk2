@@ -51,20 +51,26 @@ SetWel (
 /**
   Check for not device write in progress
 
-  @param[in]  Instance  - SPI NOR instance with all protocols, etc.
+  @param[in]  Instance    SPI NOR instance with all protocols, etc.
+  @param[in]  Timeout     Timeout in microsecond
+  @param[in]  RetryCount  The retry count
 
   @retval EFI_SUCCESS           Device does not have a write in progress
   @retval EFI_DEVICE_ERROR      SPI Flash part did not respond properly
 **/
 EFI_STATUS
 WaitNotWip (
-  IN      SPI_NOR_FLASH_INSTANCE  *SpiNorFlashInstance
+  IN      SPI_NOR_FLASH_INSTANCE  *SpiNorFlashInstance,
+  IN      UINT32                  Timeout,
+  IN      UINT32                  RetryCount
   );
 
 /**
   Check for write enable latch set and not device write in progress
 
-  @param[in]  Instance  - SPI NOR instance with all protocols, etc.
+  @param[in]  Instance    SPI NOR instance with all protocols, etc.
+  @param[in]  Timeout     Timeout in microsecond
+  @param[in]  RetryCount  The retry count
 
   @retval EFI_SUCCESS           Device does not have a write in progress and
                                 write enable latch is set
@@ -72,13 +78,17 @@ WaitNotWip (
 **/
 EFI_STATUS
 WaitWelNotWip (
-  IN      SPI_NOR_FLASH_INSTANCE  *SpiNorFlashInstance
+  IN      SPI_NOR_FLASH_INSTANCE  *SpiNorFlashInstance,
+  IN      UINT32                  Timeout,
+  IN      UINT32                  RetryCount
   );
 
 /**
   Check for not write enable latch set and not device write in progress
 
-  @param[in]  Instance  - SPI NOR instance with all protocols, etc.
+  @param[in]  Instance    SPI NOR instance with all protocols, etc.
+  @param[in]  Timeout     Timeout in microsecond
+  @param[in]  RetryCount  The retry count
 
   @retval EFI_SUCCESS           Device does not have a write in progress and
                                 write enable latch is not set
@@ -86,7 +96,9 @@ WaitWelNotWip (
 **/
 EFI_STATUS
 WaitNotWelNotWip (
-  IN      SPI_NOR_FLASH_INSTANCE  *SpiNorFlashInstance
+  IN      SPI_NOR_FLASH_INSTANCE  *SpiNorFlashInstance,
+  IN      UINT32                  Timeout,
+  IN      UINT32                  RetryCount
   );
 
 /**

@@ -229,57 +229,63 @@ SetWel (
 /**
   Check for not device write in progress
 
-  @param[in]  Instance  - SPI NOR instance with all protocols, etc.
+  @param[in]  Instance    SPI NOR instance with all protocols, etc.
+  @param[in]  Timeout     Timeout in microsecond
+  @param[in]  RetryCount  The retry count
 
   @retval EFI_SUCCESS           Device does not have a write in progress
   @retval EFI_DEVICE_ERROR      SPI Flash part did not respond properly
 **/
 EFI_STATUS
 WaitNotWip (
-  IN      SPI_NOR_FLASH_INSTANCE  *Instance
+  IN      SPI_NOR_FLASH_INSTANCE  *SpiNorFlashInstance,
+  IN      UINT32                  Timeout,
+  IN      UINT32                  RetryCount
   )
 {
   EFI_STATUS  Status;
   UINT8       DeviceStatus;
-  UINTN       RetryCount;
-  UINTN       DelayMicroseconds;
+  UINT32      AlreadyDelayedInMicroseconds;
 
-  DelayMicroseconds = FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds);
-  RetryCount        = FixedPcdGet32 (PcdSpiNorFlashOperationRetryCount);
+  if (Timeout == 0) {
+    return EFI_SUCCESS;
+  }
+
   if (RetryCount == 0) {
     RetryCount = 1;
   }
 
   do {
-    Status = InternalReadStatus (Instance, 1, &DeviceStatus);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "%a: Read status error\n", __func__));
-      ASSERT (FALSE);
-      break;
+    AlreadyDelayedInMicroseconds = 0;
+    while (AlreadyDelayedInMicroseconds < Timeout) {
+      Status = InternalReadStatus (SpiNorFlashInstance, 1, &DeviceStatus);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "%a: Read status error\n", __FUNCTION__));
+        ASSERT (FALSE);
+        return Status;
+      }
+
+      if ((DeviceStatus & SPI_FLASH_SR_WIP) == SPI_FLASH_SR_NOT_WIP) {
+        return Status;
+      }
+
+      MicroSecondDelay (FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds));
+      AlreadyDelayedInMicroseconds += FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds);
     }
 
-    if (  EFI_ERROR (Status)
-       || ((DeviceStatus & SPI_FLASH_SR_WIP) == SPI_FLASH_SR_NOT_WIP))
-    {
-      break;
-    }
-
-    MicroSecondDelay (DelayMicroseconds);
     RetryCount--;
   } while (RetryCount > 0);
 
-  if (RetryCount == 0) {
-    DEBUG ((DEBUG_ERROR, "%a: Timeout error\n", __func__));
-    Status = EFI_DEVICE_ERROR;
-  }
-
-  return Status;
+  DEBUG ((DEBUG_ERROR, "%a: Timeout error\n", __FUNCTION__));
+  return EFI_DEVICE_ERROR;
 }
 
 /**
   Check for write enable latch set and not device write in progress
 
-  @param[in]  Instance  - SPI NOR instance with all protocols, etc.
+  @param[in]  Instance    SPI NOR instance with all protocols, etc.
+  @param[in]  Timeout     Timeout in microsecond
+  @param[in]  RetryCount  The retry count
 
   @retval EFI_SUCCESS           Device does not have a write in progress and
                                 write enable latch is set
@@ -287,50 +293,54 @@ WaitNotWip (
 **/
 EFI_STATUS
 WaitWelNotWip (
-  IN      SPI_NOR_FLASH_INSTANCE  *Instance
+  IN      SPI_NOR_FLASH_INSTANCE  *SpiNorFlashInstance,
+  IN      UINT32                  Timeout,
+  IN      UINT32                  RetryCount
   )
 {
   EFI_STATUS  Status;
   UINT8       DeviceStatus;
-  UINTN       RetryCount;
-  UINTN       DelayMicroseconds;
+  UINT32      AlreadyDelayedInMicroseconds;
 
-  DelayMicroseconds = FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds);
-  RetryCount        = FixedPcdGet32 (PcdSpiNorFlashOperationRetryCount);
+  if (Timeout == 0) {
+    return EFI_SUCCESS;
+  }
+
   if (RetryCount == 0) {
     RetryCount = 1;
   }
 
   do {
-    Status = InternalReadStatus (Instance, 1, &DeviceStatus);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "%a: Fail to read WEL.\n", __func__));
-      ASSERT_EFI_ERROR (Status);
+    AlreadyDelayedInMicroseconds = 0;
+    while (AlreadyDelayedInMicroseconds < Timeout) {
+      Status = InternalReadStatus (SpiNorFlashInstance, 1, &DeviceStatus);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "%a: Fail to read WEL.\n", __FUNCTION__));
+        ASSERT_EFI_ERROR (Status);
+        return Status;
+      }
+
+      if ((DeviceStatus & (SPI_FLASH_SR_WIP | SPI_FLASH_SR_WEL)) == SPI_FLASH_SR_WEL) {
+        return Status;
+      }
+
+      MicroSecondDelay (FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds));
+      AlreadyDelayedInMicroseconds += FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds);
     }
 
-    if (  EFI_ERROR (Status)
-       || ((DeviceStatus & (SPI_FLASH_SR_WIP | SPI_FLASH_SR_WEL))
-           == SPI_FLASH_SR_WEL))
-    {
-      break;
-    }
-
-    MicroSecondDelay (DelayMicroseconds);
     RetryCount--;
   } while (RetryCount > 0);
 
-  if (RetryCount == 0) {
-    DEBUG ((DEBUG_ERROR, "%a: Timeout error\n", __func__));
-    Status = EFI_DEVICE_ERROR;
-  }
-
-  return Status;
+  DEBUG ((DEBUG_ERROR, "%a: Timeout error\n", __FUNCTION__));
+  return EFI_DEVICE_ERROR;
 }
 
 /**
   Check for not write enable latch set and not device write in progress
 
-  @param[in]  Instance  - SPI NOR instance with all protocols, etc.
+  @param[in]  Instance    SPI NOR instance with all protocols, etc.
+  @param[in]  Timeout     Timeout in microsecond
+  @param[in]  RetryCount  The retry count
 
   @retval EFI_SUCCESS           Device does not have a write in progress and
                                 write enable latch is not set
@@ -338,40 +348,43 @@ WaitWelNotWip (
 **/
 EFI_STATUS
 WaitNotWelNotWip (
-  IN      SPI_NOR_FLASH_INSTANCE  *Instance
+  IN      SPI_NOR_FLASH_INSTANCE  *SpiNorFlashInstance,
+  IN      UINT32                  Timeout,
+  IN      UINT32                  RetryCount
   )
 {
   EFI_STATUS  Status;
   UINT8       DeviceStatus;
-  UINTN       RetryCount;
-  UINTN       DelayMicroseconds;
+  UINT32      AlreadyDelayedInMicroseconds;
 
-  DelayMicroseconds = FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds);
-  RetryCount        = FixedPcdGet32 (PcdSpiNorFlashOperationRetryCount);
+  if (Timeout == 0) {
+    return EFI_SUCCESS;
+  }
+
   if (RetryCount == 0) {
     RetryCount = 1;
   }
 
   do {
-    Status = InternalReadStatus (Instance, 1, &DeviceStatus);
-    ASSERT_EFI_ERROR (Status);
-    if (  EFI_ERROR (Status)
-       || ((DeviceStatus & (SPI_FLASH_SR_WIP | SPI_FLASH_SR_WEL))
-           == SPI_FLASH_SR_NOT_WIP))
-    {
-      break;
+    AlreadyDelayedInMicroseconds = 0;
+    while (AlreadyDelayedInMicroseconds < Timeout) {
+      Status = InternalReadStatus (SpiNorFlashInstance, 1, &DeviceStatus);
+      ASSERT_EFI_ERROR (Status);
+      if (EFI_ERROR (Status) ||
+          ((DeviceStatus & (SPI_FLASH_SR_WIP | SPI_FLASH_SR_WEL)) == SPI_FLASH_SR_NOT_WIP))
+      {
+        return Status;
+      }
+
+      MicroSecondDelay (FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds));
+      AlreadyDelayedInMicroseconds += FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds);
     }
 
-    MicroSecondDelay (DelayMicroseconds);
     RetryCount--;
   } while (RetryCount > 0);
 
-  if (RetryCount == 0) {
-    DEBUG ((DEBUG_ERROR, "SpiNorFlash:%a: Timeout error\n", __func__));
-    Status = EFI_DEVICE_ERROR;
-  }
-
-  return Status;
+  DEBUG ((DEBUG_ERROR, "SpiNorFlash:%a: Timeout error\n", __FUNCTION__));
+  return EFI_DEVICE_ERROR;
 }
 
 /**
@@ -411,7 +424,7 @@ GetFlashId (
   Instance = SPI_NOR_FLASH_FROM_THIS (This);
 
   // Check not WIP
-  Status = WaitNotWip (Instance);
+  Status = WaitNotWip (Instance, FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds), FixedPcdGet32 (PcdSpiNorFlashFixedTimeoutRetryCount));
 
   if (!EFI_ERROR (Status)) {
     TransactionBufferLength = FillWriteBuffer (
@@ -503,7 +516,7 @@ LfReadData (
     }
 
     // Check not WIP
-    Status = WaitNotWip (Instance);
+    Status = WaitNotWip (Instance, FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds), FixedPcdGet32 (PcdSpiNorFlashFixedTimeoutRetryCount));
     if (EFI_ERROR (Status)) {
       break;
     }
@@ -635,7 +648,7 @@ ReadData (
     }
 
     // Check not WIP
-    Status = WaitNotWip (Instance);
+    Status = WaitNotWip (Instance, FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds), FixedPcdGet32 (PcdSpiNorFlashFixedTimeoutRetryCount));
     if (EFI_ERROR (Status)) {
       break;
     }
@@ -739,7 +752,7 @@ WriteStatus (
   Instance = SPI_NOR_FLASH_FROM_THIS (This);
 
   // Check not WIP
-  Status = WaitNotWip (Instance);
+  Status = WaitNotWip (Instance, FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds), FixedPcdGet32 (PcdSpiNorFlashFixedTimeoutRetryCount));
 
   // Set Write Enable
   if (!EFI_ERROR (Status)) {
@@ -748,7 +761,7 @@ WriteStatus (
       DEBUG ((DEBUG_ERROR, "%a: set Write Enable Error.\n", __func__));
       ASSERT_EFI_ERROR (Status);
       // Check not WIP & WEL enabled
-      Status = WaitWelNotWip (Instance);
+      Status = WaitWelNotWip (Instance, FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds), FixedPcdGet32 (PcdSpiNorFlashFixedTimeoutRetryCount));
     }
 
     // Write the Status Register
@@ -861,7 +874,7 @@ WriteData (
     }
 
     // Check not WIP
-    Status = WaitNotWip (Instance);
+    Status = WaitNotWip (Instance, FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds), FixedPcdGet32 (PcdSpiNorFlashFixedTimeoutRetryCount));
     if (EFI_ERROR (Status)) {
       break;
     }
@@ -875,7 +888,7 @@ WriteData (
       }
 
       // Check not WIP & WEL enabled
-      Status = WaitWelNotWip (Instance);
+      Status = WaitWelNotWip (Instance, FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds), FixedPcdGet32 (PcdSpiNorFlashFixedTimeoutRetryCount));
       if (EFI_ERROR (Status)) {
         break;
       }
@@ -911,12 +924,12 @@ WriteData (
 
     if (Instance->WriteEnableLatchRequired) {
       // Check not WIP & not WEL
-      Status = WaitNotWelNotWip (Instance);
+      Status = WaitNotWelNotWip (Instance, FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds), FixedPcdGet32 (PcdSpiNorFlashFixedTimeoutRetryCount));
       if (EFI_ERROR (Status)) {
         break;
       }
     } else {
-      Status = WaitNotWip (Instance);
+      Status = WaitNotWip (Instance, FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds), FixedPcdGet32 (PcdSpiNorFlashFixedTimeoutRetryCount));
       if (EFI_ERROR (Status)) {
         break;
       }
@@ -967,6 +980,8 @@ Erase (
   UINT32                     BlockCountToErase;
   UINT32                     BlockSizeToErase;
   UINT8                      BlockEraseCommand;
+  UINT32                     TypicalEraseTime;
+  UINT64                     MaximumEraseTimeout;
   SFDP_SECTOR_REGION_RECORD  *FlashRegion;
 
   DEBUG ((DEBUG_INFO, "%a: Entry: Erase address = 0x%08x, Block count = 0x%x\n", __func__, FlashAddress, BlockCount));
@@ -1019,7 +1034,9 @@ Erase (
                  TotalEraseLength - ByteCounter,
                  &BlockSizeToErase,
                  &BlockCountToErase,
-                 &BlockEraseCommand
+                 &BlockEraseCommand,
+                 &TypicalEraseTime,
+                 &MaximumEraseTimeout
                  );
       if (EFI_ERROR (Status)) {
         DEBUG ((DEBUG_ERROR, "  Failed to get erase block attribute.\n"));
@@ -1043,7 +1060,7 @@ Erase (
     //
 
     // Check not WIP
-    Status = WaitNotWip (Instance);
+    Status = WaitNotWip (Instance, FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds), FixedPcdGet32 (PcdSpiNorFlashFixedTimeoutRetryCount));
     if (EFI_ERROR (Status)) {
       break;
     }
@@ -1056,7 +1073,7 @@ Erase (
       }
 
       // Check not WIP & WEL enabled
-      Status = WaitWelNotWip (Instance);
+      Status = WaitWelNotWip (Instance, FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds), FixedPcdGet32 (PcdSpiNorFlashFixedTimeoutRetryCount));
       if (EFI_ERROR (Status)) {
         break;
       }
@@ -1093,13 +1110,19 @@ Erase (
     }
 
     if (Instance->WriteEnableLatchRequired) {
+      //
       // Check not WIP & not WEL
-      Status = WaitNotWelNotWip (Instance);
+      // Use the timeout value calculated by SPI NOR flash SFDP.
+      //
+      Status = WaitNotWelNotWip (Instance, (UINT32)MaximumEraseTimeout * 1000, FixedPcdGet32 (PcdSpiNorFlashOperationRetryCount));
       if (EFI_ERROR (Status)) {
         break;
       }
     } else {
-      Status = WaitNotWip (Instance);
+      //
+      // Use the timeout value calculated by SPI NOR flash SFDP.
+      //
+      Status = WaitNotWip (Instance, (UINT32)MaximumEraseTimeout * 1000, FixedPcdGet32 (PcdSpiNorFlashOperationRetryCount));
       if (EFI_ERROR (Status)) {
         break;
       }

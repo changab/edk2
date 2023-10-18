@@ -424,6 +424,10 @@ GetEraseTypeRecord (
   @param[in, out] BlockCountToErase     Input  - The expected blocks to erase.
                                         Output - The determined number of blocks to erase.
   @param[out]     BlockEraseCommand     The erase command used for this continious blocks.
+  @param[out]     TypicalTime           Pointer to receive the typical time in millisecond
+                                        to erase this erase type size.
+  @param[out]     MaximumTimeout        Pointer to receive the maximum timeout in millisecond
+                                        to erase this erase type size.
 
   @retval EFI_SUCCESS          The erase block attribute is returned.
   @retval EFI_DEVICE_ERROR     No valid SFDP discovered.
@@ -438,7 +442,9 @@ GetEraseBlockAttribute (
   IN     UINT32                     RemainingSize,
   IN OUT UINT32                     *BlockSizeToErase,
   IN OUT UINT32                     *BlockCountToErase,
-  OUT    UINT8                      *BlockEraseCommand
+  OUT    UINT8                      *BlockEraseCommand,
+  OUT    UINT32                     *TypicalTime,
+  OUT    UINT64                     *MaximumTimeout
   )
 {
   EFI_STATUS                        Status;
@@ -457,6 +463,8 @@ GetEraseBlockAttribute (
         *BlockSizeToErase  = EraseType->EraseSizeInByte;
         *BlockCountToErase = 1;
         *BlockEraseCommand = EraseType->EraseInstruction;
+        *TypicalTime       = EraseType->EraseTypicalTime;
+        *MaximumTimeout    = EraseType->EraseTimeout;
         Status             = EFI_SUCCESS;
         break;
       }
@@ -472,6 +480,8 @@ GetEraseBlockAttribute (
   DEBUG ((DEBUG_VERBOSE, "    - Erase block count  : 0x%08x.\n", *BlockCountToErase));
   DEBUG ((DEBUG_VERBOSE, "    - Erase block command: 0x%02x.\n", *BlockEraseCommand));
   DEBUG ((DEBUG_VERBOSE, "    - Remaining size to erase: 0x%08x.\n", RemainingSize));
+  DEBUG ((DEBUG_VERBOSE, "    - Erase typical time: %d milliseconds.\n", *TypicalTime));
+  DEBUG ((DEBUG_VERBOSE, "    - Erase timeout: %d milliseconds.\n", *MaximumTimeout));
   return EFI_SUCCESS;
 }
 
@@ -811,7 +821,7 @@ GetCurrentSectorMapConfiguration (
   CommandEntry    = (SFDP_SECTOR_MAP_DETECTION_RECORD *)GetFirstNode (&Instance->ConfigurationCommandList);
   while (TRUE) {
     // Check not WIP
-    Status = WaitNotWip (Instance);
+    Status = WaitNotWip (Instance, FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds), FixedPcdGet32 (PcdSpiNorFlashFixedTimeoutRetryCount));
 
     // Read configuration byte.
     AddressLength = SPI_ADDR_3BYTE_ONLY;
@@ -1223,7 +1233,7 @@ ReadSfdpHeader (
   UINT32      TransactionBufferLength;
 
   // Check not WIP
-  Status = WaitNotWip (Instance);
+  Status = WaitNotWip (Instance, FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds), FixedPcdGet32 (PcdSpiNorFlashFixedTimeoutRetryCount));
 
   // Read SFDP Header
   TransactionBufferLength = FillWriteBuffer (
@@ -1391,7 +1401,7 @@ ReadSfdpParameterHeader (
   ZeroMem (SfdpParameterHeader, sizeof (SFDP_PARAMETER_HEADER));
   for (Index = 0; Index < Instance->SfdpHeader.NumParameterHeaders + 1; Index++) {
     // Check not WIP
-    Status = WaitNotWip (Instance);
+    Status = WaitNotWip (Instance, FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds), FixedPcdGet32 (PcdSpiNorFlashFixedTimeoutRetryCount));
     if (!EFI_ERROR (Status)) {
       TransactionBufferLength = FillWriteBuffer (
                                   Instance,
@@ -1505,7 +1515,7 @@ SpiReadSfdpPtp (
     }
 
     // Check not WIP
-    Status = WaitNotWip (Instance);
+    Status = WaitNotWip (Instance, FixedPcdGet32 (PcdSpiNorFlashOperationDelayMicroseconds), FixedPcdGet32 (PcdSpiNorFlashFixedTimeoutRetryCount));
 
     //  Read Data
     if (!EFI_ERROR (Status)) {

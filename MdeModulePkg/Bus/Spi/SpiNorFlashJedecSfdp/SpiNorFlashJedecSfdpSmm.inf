@@ -49,6 +49,7 @@
 
 [FixedPcd]
   gEfiMdePkgTokenSpaceGuid.PcdSpiNorFlashOperationRetryCount
+  gEfiMdePkgTokenSpaceGuid.PcdSpiNorFlashFixedTimeoutRetryCount
   gEfiMdePkgTokenSpaceGuid.PcdSpiNorFlashOperationDelayMicroseconds
 
 [Guids]
