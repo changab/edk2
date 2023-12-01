@@ -666,6 +666,7 @@ TlsConfigureSession (
     return Status;
   }
 
+/*
   Status = HttpInstance->Tls->SetSessionData (
                                 HttpInstance->Tls,
                                 EfiTlsVerifyMethod,
@@ -684,7 +685,7 @@ TlsConfigureSession (
                                 );
   if (EFI_ERROR (Status)) {
     return Status;
-  }
+  }*/
 
   Status = HttpInstance->Tls->SetSessionData (
                                 HttpInstance->Tls,
@@ -704,7 +705,7 @@ TlsConfigureSession (
     DEBUG ((DEBUG_ERROR, "TlsConfigCipherList: return %r error.\n", Status));
     return Status;
   }
-
+/*
   //
   // Tls Config Certificate
   //
@@ -713,6 +714,7 @@ TlsConfigureSession (
     DEBUG ((DEBUG_ERROR, "TLS Certificate Config Error!\n"));
     return Status;
   }
+  */
 
   //
   // TlsCreateTxRxEvent

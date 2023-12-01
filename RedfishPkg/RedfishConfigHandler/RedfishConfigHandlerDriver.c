@@ -331,6 +331,7 @@ RedfishServiceDiscoveredCallback (
       gRedfishConfigData.RedfishServiceInfo.RedfishServiceProductVer   = RedfishInstance->Information.ProductVer;
       gRedfishConfigData.RedfishServiceInfo.RedfishServiceUseHttps     = RedfishInstance->Information.UseHttps;
       gRedfishServiceDiscovered                                        = TRUE;
+      DEBUG ((DEBUG_MANAGEABILITY, "%a: Redfish service %s is discovered!\n", __func__, gRedfishConfigData.RedfishServiceInfo.RedfishServiceUuid));
     }
 
     //

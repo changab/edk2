@@ -259,6 +259,30 @@ RedfishPlatformHostInterfaceProtocolData (
         HostNameLength
         );
 
+      // TEST
+      RedfishOverIpData->HostIpAssignmentType          = RedfishHostIpAssignmentStatic;
+      RedfishOverIpData->RedfishServiceIpDiscoveryType = RedfishHostIpAssignmentStatic;
+      RedfishOverIpData->HostIpAddress[0] = 192;
+      RedfishOverIpData->HostIpAddress[1] = 168;
+      RedfishOverIpData->HostIpAddress[2] = 31;
+      RedfishOverIpData->HostIpAddress[3] = 2;
+
+      RedfishOverIpData->HostIpMask [0] = 255;
+      RedfishOverIpData->HostIpMask [1] = 255;
+      RedfishOverIpData->HostIpMask [2] = 255;
+      RedfishOverIpData->HostIpMask [3] = 0;
+
+      RedfishOverIpData->RedfishServiceIpMask [0] = 255;
+      RedfishOverIpData->RedfishServiceIpMask [1] = 255;
+      RedfishOverIpData->RedfishServiceIpMask [2] = 255;
+      RedfishOverIpData->RedfishServiceIpMask [3] = 0;
+
+      RedfishOverIpData->RedfishServiceIpAddress [0] = 192;
+      RedfishOverIpData->RedfishServiceIpAddress [1] = 168;
+      RedfishOverIpData->RedfishServiceIpAddress [2] = 31;
+      RedfishOverIpData->RedfishServiceIpAddress [3] = 3;
+      // TEST
+
       DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "    MC_HOST_INTERFACE_PROTOCOL_RECORD is returned successfully.\n"));
       *ProtocolRecord = ThisProtocolRecord;
       return EFI_SUCCESS;
@@ -310,6 +334,12 @@ RetrievedBmcUsbNicInfo (
   while (TRUE) {
     if (ThisInstance->IsExposedByBmc) {
       ThisInstance->IsSuppportedHostInterface = FALSE;
+
+
+      // Test
+      ThisInstance->IsSuppportedHostInterface = TRUE;
+      return EFI_SUCCESS;
+      // Test
 
       // Probe if Redfish Host Interface Credential Bootstrapping is supported.
       ThisInstance->CredentialBootstrapping = ProbeRedfishCredentialBootstrap ();
@@ -627,6 +657,15 @@ HostInterfaceIpmiCheckMacAddress (
   {
     IpmiLanMacAddressSize = 0;
 
+    // TEST
+    if (ChannelNum == 3) {
+      UsbNicInfo->IpmiLanChannelNumber = (UINT8)ChannelNum;
+      UsbNicInfo->IsExposedByBmc       = TRUE;
+      DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "    !!!TEST!!! (FAKE) MAC address is matched.\n"));
+      return EFI_SUCCESS;
+    };
+    // TEST
+
     // Check if the IPMI channel information is already cached.
     Status = EFI_NOT_FOUND;
     if (AlreadyCached) {
@@ -749,6 +788,7 @@ HostInterfaceIpmiCheckMacAddress (
         DEBUG ((DEBUG_REDFISH_HOST_INTERFACE, "    MAC address is not matched.\n"));
         continue;
       }
+
 
       // This is the NIC exposed by BMC.
       UsbNicInfo->IpmiLanChannelNumber = (UINT8)ChannelNum;
