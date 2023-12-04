@@ -921,7 +921,7 @@ AmlCodeGenNameUnicodeString (
   Status = AmlCreateDataNode (
              EAmlNodeDataTypeRaw,
              (CONST UINT8 *)String,
-             StrSize (String),
+             (UINT32) StrSize (String),
              &DataNode
              );
   if (EFI_ERROR (Status)) {
