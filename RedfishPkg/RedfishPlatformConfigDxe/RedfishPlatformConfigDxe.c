@@ -314,7 +314,7 @@ DumpHiiStatementPrompt (
 
 **/
 CHAR8 *
-BuildMenPath (
+BuildMenuPath (
   IN REDFISH_PLATFORM_CONFIG_STATEMENT_PRIVATE  *StatementPrivate
   )
 {
@@ -2334,7 +2334,7 @@ RedfishPlatformConfigProtocolGetAttribute (
   //
   // Build up menu path
   //
-  AttributeValue->MenuPath = BuildMenPath (TargetStatement);
+  AttributeValue->MenuPath = BuildMenuPath (TargetStatement);
   if (AttributeValue->MenuPath == NULL) {
     DEBUG ((DEBUG_ERROR, "%a: failed to build menu path for \"%a\"\n", __func__, AttributeValue->AttributeName));
   }
