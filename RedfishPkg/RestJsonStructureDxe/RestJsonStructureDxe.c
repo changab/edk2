@@ -10,6 +10,7 @@
 **/
 
 #include <Uefi.h>
+#include <Library/DebugLib.h>
 #include <Protocol/RestJsonStructure.h>
 #include "RestJsonStructureInternal.h"
 
@@ -71,6 +72,7 @@ RestJsonStructureRegister (
       NumberOfNS++;
     }
   }
+  DEBUG((DEBUG_MANAGEABILITY, "%a: %d interpreter to register.\n", __func__, NumberOfNS));
 
   Instance =
     (REST_JSON_STRUCTURE_INSTANCE *)AllocateZeroPool (sizeof (REST_JSON_STRUCTURE_INSTANCE) + NumberOfNS * sizeof (EFI_REST_JSON_RESOURCE_TYPE_IDENTIFIER));
@@ -88,6 +90,10 @@ RestJsonStructureRegister (
   ThisSupportedInterp    = JsonStructureSupported;
   for (Index = 0; Index < NumberOfNS; Index++) {
     CopyMem ((VOID *)CloneSupportedInterpId, (VOID *)&ThisSupportedInterp->RestResourceInterp, sizeof (EFI_REST_JSON_RESOURCE_TYPE_IDENTIFIER));
+    DEBUG((DEBUG_MANAGEABILITY, "  Resource type : %a\n", ThisSupportedInterp->RestResourceInterp.NameSpace.ResourceTypeName));
+    DEBUG((DEBUG_MANAGEABILITY, "  Major version : %a\n", ThisSupportedInterp->RestResourceInterp.NameSpace.MajorVersion));
+    DEBUG((DEBUG_MANAGEABILITY, "  Minor version : %a\n", ThisSupportedInterp->RestResourceInterp.NameSpace.MinorVersion));
+    DEBUG((DEBUG_MANAGEABILITY, "  Errata version: %a\n", ThisSupportedInterp->RestResourceInterp.NameSpace.ErrataVersion));
     ThisSupportedInterp = (EFI_REST_JSON_STRUCTURE_SUPPORTED *)ThisSupportedInterp->NextSupportedRsrcInterp.ForwardLink;
     CloneSupportedInterpId++;
   }
@@ -125,6 +131,8 @@ InterpreterInstanceToStruct (
   EFI_STATUS                              Status;
   EFI_REST_JSON_RESOURCE_TYPE_IDENTIFIER  *ThisSupportedRsrcTypeId;
 
+  DEBUG((DEBUG_MANAGEABILITY, "%a: Entry\n", __func__));
+
   if ((This == NULL) ||
       (InterpreterInstance == NULL) ||
       (ResourceRaw == NULL) ||
@@ -146,9 +154,12 @@ InterpreterInstanceToStruct (
                                     ResourceRaw,
                                     RestJSonHeader
                                     );
+    if (EFI_ERROR (Status)) {
+      DEBUG((DEBUG_MANAGEABILITY, "No resource type identifier JsonToStructure returns %r\n"));
+    }
   } else {
     //
-    // Check if the namesapce and version is supported by this interpreter.
+    // Check if the namespace and version is supported by this interpreter.
     //
     ThisSupportedRsrcTypeId = InterpreterInstance->SupportedRsrcIndentifier;
     for (Index = 0; Index < InterpreterInstance->NumberOfNameSpaceToConvert; Index++) {
@@ -171,6 +182,10 @@ InterpreterInstanceToStruct (
                                           ResourceRaw,
                                           RestJSonHeader
                                           );
+          if (EFI_ERROR (Status)) {
+            DEBUG((DEBUG_MANAGEABILITY, "Don't check version of this resource type identifier JsonToStructure returns %r\n"));
+            DEBUG((DEBUG_MANAGEABILITY, "  Supported ResourceTypeName = %a\n", ThisSupportedRsrcTypeId->NameSpace.ResourceTypeName));
+          }
           break;
         } else {
           //
@@ -195,6 +210,13 @@ InterpreterInstanceToStruct (
                                             ResourceRaw,
                                             RestJSonHeader
                                             );
+            if (EFI_ERROR (Status)) {
+              DEBUG((DEBUG_MANAGEABILITY, "Check version of this resource type identifier JsonToStructure returns %r\n"));
+              DEBUG((DEBUG_MANAGEABILITY, "  Supported ResourceTypeName = %a\n", ThisSupportedRsrcTypeId->NameSpace.ResourceTypeName));
+              DEBUG((DEBUG_MANAGEABILITY, "  Supported MajorVersion     = %a\n", ThisSupportedRsrcTypeId->NameSpace.MajorVersion));
+              DEBUG((DEBUG_MANAGEABILITY, "  Supported MinorVersion     = %a\n", ThisSupportedRsrcTypeId->NameSpace.MinorVersion));
+              DEBUG((DEBUG_MANAGEABILITY, "  Supported ErrataVersion    = %a\n", ThisSupportedRsrcTypeId->NameSpace.ErrataVersion));
+            }
             break;
           }
         }
@@ -231,6 +253,8 @@ InterpreterEfiStructToInstance (
   EFI_STATUS                              Status;
   EFI_REST_JSON_RESOURCE_TYPE_IDENTIFIER  *ThisSupportedRsrcTypeId;
   EFI_REST_JSON_RESOURCE_TYPE_IDENTIFIER  *RsrcTypeIdentifier;
+
+  DEBUG((DEBUG_MANAGEABILITY, "%a: Entry\n", __func__));
 
   if ((This == NULL) ||
       (InterpreterInstance == NULL) ||
@@ -284,6 +308,13 @@ InterpreterEfiStructToInstance (
                                         RestJSonHeader,
                                         ResourceRaw
                                         );
+        if (EFI_ERROR (Status)) {
+          DEBUG((DEBUG_MANAGEABILITY, "StructureToJson returns %r\n"));
+          DEBUG((DEBUG_MANAGEABILITY, "  Supported ResourceTypeName = %a\n", ThisSupportedRsrcTypeId->NameSpace.ResourceTypeName));
+          DEBUG((DEBUG_MANAGEABILITY, "  Supported MajorVersion     = %a\n", ThisSupportedRsrcTypeId->NameSpace.MajorVersion));
+          DEBUG((DEBUG_MANAGEABILITY, "  Supported MinorVersion     = %a\n", ThisSupportedRsrcTypeId->NameSpace.MinorVersion));
+          DEBUG((DEBUG_MANAGEABILITY, "  Supported ErrataVersion    = %a\n", ThisSupportedRsrcTypeId->NameSpace.ErrataVersion));
+        }
         break;
       }
     }
@@ -416,6 +447,32 @@ RestJsonStructureToStruct (
     return EFI_UNSUPPORTED;
   }
 
+  if (RsrcTypeIdentifier != NULL) {
+    DEBUG((DEBUG_MANAGEABILITY, "%a: Looking for the Redfish JSON to C Structure converter:\n", __func__));
+    if (RsrcTypeIdentifier->NameSpace.ResourceTypeName != NULL) {
+      DEBUG((DEBUG_MANAGEABILITY, "  ResourceType: %a\n", RsrcTypeIdentifier->NameSpace.ResourceTypeName));
+    } else {
+      DEBUG((DEBUG_MANAGEABILITY, "  ResourceType: NULL"));
+    }
+    if (RsrcTypeIdentifier->NameSpace.MajorVersion != NULL) {
+      DEBUG((DEBUG_MANAGEABILITY, "  MajorVersion: %a\n", RsrcTypeIdentifier->NameSpace.MajorVersion));
+    } else {
+      DEBUG((DEBUG_MANAGEABILITY, "  MajorVersion: NULL"));
+    }
+    if (RsrcTypeIdentifier->NameSpace.MinorVersion != NULL) {
+      DEBUG((DEBUG_MANAGEABILITY, "  MinorVersion: %a\n", RsrcTypeIdentifier->NameSpace.MinorVersion));
+    } else {
+      DEBUG((DEBUG_MANAGEABILITY, "  MinorVersion: NULL"));
+    }
+    if (RsrcTypeIdentifier->NameSpace.ErrataVersion != NULL) {
+      DEBUG((DEBUG_MANAGEABILITY, "  ErrataVersion: %a\n", RsrcTypeIdentifier->NameSpace.ErrataVersion));
+    } else {
+      DEBUG((DEBUG_MANAGEABILITY, "  ErrataVersion: NULL"));
+    }
+  } else {
+    DEBUG((DEBUG_MANAGEABILITY, "%a: RsrcTypeIdentifier == NULL:\n", __func__));
+  }
+
   Status   = EFI_SUCCESS;
   Instance = (REST_JSON_STRUCTURE_INSTANCE *)GetFirstNode (&mRestJsonStructureList);
   while (TRUE) {
@@ -431,6 +488,7 @@ RestJsonStructureToStruct (
     }
 
     if (IsNodeAtEnd (&mRestJsonStructureList, &Instance->NextRestJsonStructureInstance)) {
+      DEBUG((DEBUG_ERROR, "%a: No Redfish resource interpreter found\n", __func__));
       Status = EFI_UNSUPPORTED;
       break;
     }
@@ -483,6 +541,7 @@ RestJsonStructureDestroyStruct (
     }
 
     if (IsNodeAtEnd (&mRestJsonStructureList, &Instance->NextRestJsonStructureInstance)) {
+      DEBUG((DEBUG_ERROR, "%a: No Redfish resource interpreter found\n", __func__));
       Status = EFI_UNSUPPORTED;
       break;
     }
@@ -512,8 +571,9 @@ RestJsonStructureToJson (
   OUT CHAR8                            **ResourceRaw
   )
 {
-  EFI_STATUS                    Status;
-  REST_JSON_STRUCTURE_INSTANCE  *Instance;
+  EFI_STATUS                              Status;
+  REST_JSON_STRUCTURE_INSTANCE            *Instance;
+  EFI_REST_JSON_RESOURCE_TYPE_IDENTIFIER  *RsrcTypeIdentifier;
 
   if ((This == NULL) || (RestJSonHeader == NULL) || (ResourceRaw == NULL)) {
     return EFI_INVALID_PARAMETER;
@@ -522,6 +582,13 @@ RestJsonStructureToJson (
   if (IsListEmpty (&mRestJsonStructureList)) {
     return EFI_UNSUPPORTED;
   }
+
+  RsrcTypeIdentifier = &RestJSonHeader->JsonRsrcIdentifier;
+  DEBUG((DEBUG_MANAGEABILITY, "Looking for the Redfish C Structure to JSON resource converter:\n"));
+  DEBUG((DEBUG_MANAGEABILITY, "  ResourceType : %a\n", RsrcTypeIdentifier->NameSpace.ResourceTypeName));
+  DEBUG((DEBUG_MANAGEABILITY, "  MajorVersion : %a\n", RsrcTypeIdentifier->NameSpace.MajorVersion));
+  DEBUG((DEBUG_MANAGEABILITY, "  MinorVersion : %a\n", RsrcTypeIdentifier->NameSpace.MinorVersion));
+  DEBUG((DEBUG_MANAGEABILITY, "  ErrataVersion: %a\n", RsrcTypeIdentifier->NameSpace.ErrataVersion));
 
   Status   = EFI_SUCCESS;
   Instance = (REST_JSON_STRUCTURE_INSTANCE *)GetFirstNode (&mRestJsonStructureList);
@@ -537,6 +604,7 @@ RestJsonStructureToJson (
     }
 
     if (IsNodeAtEnd (&mRestJsonStructureList, &Instance->NextRestJsonStructureInstance)) {
+      DEBUG((DEBUG_ERROR, "%a: No Redfish resource interpreter found\n", __func__));
       Status = EFI_UNSUPPORTED;
       break;
     }
