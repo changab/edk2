@@ -132,6 +132,57 @@ IsHttpsUrl (
 }
 
 /**
+  Get application HTTP TLS configuration data from HTTP handle.
+
+  @param[in]  HttpInstance  The HTTP protocol handle instance.
+
+  @retval  EFI_SUCCESS      Application HTTP TLS configuration data is
+                            loaded in HttpInstance->TlsConfigData.
+  @retval  EFI_UNSUPPORTED  No application HTTP TLS configuration data
+
+**/
+EFI_STATUS
+GetHttpsTlsConfigData (
+  IN HTTP_PROTOCOL  *HttpInstance
+  )
+{
+  EFI_STATUS                            Status;
+  EDKII_HTTPS_TLS_CONFIG_DATA_PROTOCOL  *HttpsTlsConfigData;
+
+  Status = gBS->HandleProtocol (
+                  HttpInstance->Handle,
+                  &gEdkiiHttpsTlsConfigDataProtocolGuid,
+                  (VOID **)&HttpsTlsConfigData
+                  );
+  if (EFI_ERROR (Status)) {
+    return EFI_UNSUPPORTED;
+  }
+  if (HttpsTlsConfigData->Version.Major >= 1) {
+    HttpInstance->TlsConfigData.ConnectionEnd = HttpsTlsConfigData->HttpsTlsConfigData.ConnectionEnd;
+    HttpInstance->TlsConfigData.SessionState  = HttpsTlsConfigData->HttpsTlsConfigData.SessionState;
+    HttpInstance->TlsConfigData.VerifyHost    = HttpsTlsConfigData->HttpsTlsConfigData.VerifyHost;
+    HttpInstance->TlsConfigData.VerifyMethod  = HttpsTlsConfigData->HttpsTlsConfigData.VerifyMethod;
+  } else {
+    DEBUG((
+      DEBUG_ERROR,
+      "%a: Unsupported version of EDKII_HTTPS_TLS_CONFIG_DATA_PROTOCOL - %d.%d.\n",
+      __func__,
+      HttpsTlsConfigData->Version.Major,
+      HttpsTlsConfigData->Version.Minor
+      ));
+    return EFI_UNSUPPORTED;
+  }
+
+  DEBUG((
+    DEBUG_VERBOSE,
+    "%a: There is a EDKII_HTTPS_TLS_CONFIG_DATA_PROTOCOL installed on HTTP handle:0x%x.\n",
+    __func__,
+    HttpInstance->Handle
+    ));
+  return EFI_SUCCESS;
+}
+
+/**
   Creates a Tls child handle, open EFI_TLS_PROTOCOL and EFI_TLS_CONFIGURATION_PROTOCOL.
 
   @param[in]  HttpInstance  Pointer to HTTP_PROTOCOL structure.
@@ -206,6 +257,13 @@ TlsCreateChild (
     HttpInstance->TlsSb->DestroyChild (HttpInstance->TlsSb, HttpInstance->TlsChildHandle);
     return Status;
   }
+
+  // Initial default TLS configuration data.
+  HttpInstance->TlsConfigData.ConnectionEnd       = EfiTlsClient;
+  HttpInstance->TlsConfigData.VerifyMethod        = EFI_TLS_VERIFY_PEER;
+  HttpInstance->TlsConfigData.VerifyHost.Flags    = EFI_TLS_VERIFY_FLAG_NONE;
+  HttpInstance->TlsConfigData.VerifyHost.HostName = HttpInstance->RemoteHost;
+  HttpInstance->TlsConfigData.SessionState        = EfiTlsSessionNotStarted;
 
   return EFI_SUCCESS;
 }
@@ -649,14 +707,8 @@ TlsConfigureSession (
 {
   EFI_STATUS  Status;
 
-  //
-  // TlsConfigData initialization
-  //
-  HttpInstance->TlsConfigData.ConnectionEnd       = EfiTlsClient;
-  HttpInstance->TlsConfigData.VerifyMethod        = EFI_TLS_VERIFY_PEER;
-  HttpInstance->TlsConfigData.VerifyHost.Flags    = EFI_TLS_VERIFY_FLAG_NONE;
-  HttpInstance->TlsConfigData.VerifyHost.HostName = HttpInstance->RemoteHost;
-  HttpInstance->TlsConfigData.SessionState        = EfiTlsSessionNotStarted;
+  // Get applciation TLS configuration data.
+  GetHttpsTlsConfigData (HttpInstance);
 
   //
   // EfiTlsConnectionEnd,
@@ -674,6 +726,7 @@ TlsConfigureSession (
     return Status;
   }
 
+
   Status = HttpInstance->Tls->SetSessionData (
                                 HttpInstance->Tls,
                                 EfiTlsVerifyMethod,
@@ -684,14 +737,16 @@ TlsConfigureSession (
     return Status;
   }
 
-  Status = HttpInstance->Tls->SetSessionData (
-                                HttpInstance->Tls,
-                                EfiTlsVerifyHost,
-                                &HttpInstance->TlsConfigData.VerifyHost,
-                                sizeof (EFI_TLS_VERIFY_HOST)
-                                );
-  if (EFI_ERROR (Status)) {
-    return Status;
+  if (HttpInstance->TlsConfigData.VerifyMethod != EFI_TLS_VERIFY_NONE) {
+    Status = HttpInstance->Tls->SetSessionData(
+                                  HttpInstance->Tls,
+                                  EfiTlsVerifyHost,
+                                  &HttpInstance->TlsConfigData.VerifyHost,
+                                  sizeof (EFI_TLS_VERIFY_HOST)
+                                  );
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
   }
 
   Status = HttpInstance->Tls->SetSessionData (
@@ -716,10 +771,12 @@ TlsConfigureSession (
   //
   // Tls Config Certificate
   //
-  Status = TlsConfigCertificate (HttpInstance);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "TLS Certificate Config Error!\n"));
-    return Status;
+  if (HttpInstance->TlsConfigData.VerifyMethod != EFI_TLS_VERIFY_NONE) {
+    Status = TlsConfigCertificate (HttpInstance);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "TLS Certificate Config Error!\n"));
+      return Status;
+    }
   }
 
   //
