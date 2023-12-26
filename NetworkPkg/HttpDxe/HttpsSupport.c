@@ -132,6 +132,88 @@ IsHttpsUrl (
 }
 
 /**
+  Locate all EDKII_HTTPS_TLS_PLATFORM_POLICY_PROTOCOL instances and go through each
+  to check if platform HTTPS TLS policy is provided.
+
+  @param[in]       HttpHandle         The HTTP protocol handle.
+  @param[in, out]  TlsConfigData      Pointer to TLS_CONFIG_DATA of this HTTP instance.
+
+**/
+VOID
+HttpsPlatformTlsPolicy (
+  IN EFI_HANDLE           HttpHandle,
+  IN OUT TLS_CONFIG_DATA  *TlsConfigData
+  )
+{
+  EFI_STATUS                                Status;
+  UINTN                                     NumHandles;
+  EFI_HANDLE                                *HandleBuffer;
+  EFI_HANDLE                                *HandleBufferIndex;
+  EDKII_PLATFORM_HTTPS_TLS_CONFIG_DATA      PlatformHttpsTlsPolicy;
+  EDKII_HTTPS_TLS_PLATFORM_POLICY_PROTOCOL  *ProtocolInterface;
+
+  if ((HttpHandle == NULL) || (TlsConfigData == NULL)) {
+    return;
+  }
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEdkiiHttpsTlsPlatformPolicyProtocolGuid,
+                  NULL,
+                  &NumHandles,
+                  &HandleBuffer
+                  );
+  if (EFI_ERROR(Status)) {
+    DEBUG((
+      DEBUG_INFO,
+      "%a: There is no EDKII_HTTPS_TLS_PLATFORM_POLICY_PROTOCOL instance is installed for HTTP this handle:0x%x.\n",
+      __func__,
+      HttpHandle
+      ));
+    return;
+  }
+  HandleBufferIndex = HandleBuffer;
+  while (NumHandles != 0) {
+    Status = gBS->HandleProtocol (
+                    *HandleBufferIndex,
+                    &gEdkiiHttpsTlsPlatformPolicyProtocolGuid,
+                    (VOID **)&ProtocolInterface
+                    );
+    if (!EFI_ERROR(Status)) {
+      Status = ProtocolInterface->PlatformGetPolicy (
+                                    ProtocolInterface,
+                                    HttpHandle,
+                                    &PlatformHttpsTlsPolicy
+                                    );
+      if (!EFI_ERROR(Status)) {
+        if ((PlatformHttpsTlsPolicy.Version.Major == 1) && (PlatformHttpsTlsPolicy.Version.Minor == 0)) {
+          //
+          // HTTPS platform TLS policy config data version 1.0.
+          //
+          TlsConfigData->ConnectionEnd = PlatformHttpsTlsPolicy.ConnectionEnd;
+          TlsConfigData->VerifyHost    = PlatformHttpsTlsPolicy.VerifyHost;
+          TlsConfigData->VerifyMethod  = PlatformHttpsTlsPolicy.VerifyMethod;
+          Status                       = EFI_SUCCESS;
+          break;
+        }
+      }
+    }
+    HandleBufferIndex++;
+    NumHandles--;
+    Status = EFI_NOT_FOUND;
+  };
+  FreePool((VOID *)HandleBuffer);
+  if (!EFI_ERROR(Status)) {
+    DEBUG((
+      DEBUG_INFO,
+      "%a: There is a EDKII_HTTPS_TLS_PLATFORM_POLICY_PROTOCOL instance installed for this HTTP handle:0x%x.\n",
+      __func__,
+      HttpHandle
+      ));
+  }
+  return;
+}
+
+/**
   Creates a Tls child handle, open EFI_TLS_PROTOCOL and EFI_TLS_CONFIGURATION_PROTOCOL.
 
   @param[in]  ImageHandle           The firmware allocated handle for the UEFI image.
@@ -650,6 +732,8 @@ TlsConfigureSession (
   HttpInstance->TlsConfigData.VerifyHost.HostName = HttpInstance->RemoteHost;
   HttpInstance->TlsConfigData.SessionState        = EfiTlsSessionNotStarted;
 
+  HttpsPlatformTlsPolicy (HttpInstance->Handle, &HttpInstance->TlsConfigData);
+
   //
   // EfiTlsConnectionEnd,
   // EfiTlsVerifyMethod,
@@ -666,6 +750,7 @@ TlsConfigureSession (
     return Status;
   }
 
+
   Status = HttpInstance->Tls->SetSessionData (
                                 HttpInstance->Tls,
                                 EfiTlsVerifyMethod,
@@ -676,14 +761,16 @@ TlsConfigureSession (
     return Status;
   }
 
-  Status = HttpInstance->Tls->SetSessionData (
-                                HttpInstance->Tls,
-                                EfiTlsVerifyHost,
-                                &HttpInstance->TlsConfigData.VerifyHost,
-                                sizeof (EFI_TLS_VERIFY_HOST)
-                                );
-  if (EFI_ERROR (Status)) {
-    return Status;
+  if (HttpInstance->TlsConfigData.VerifyMethod != EFI_TLS_VERIFY_NONE) {
+    Status = HttpInstance->Tls->SetSessionData(
+                                  HttpInstance->Tls,
+                                  EfiTlsVerifyHost,
+                                  &HttpInstance->TlsConfigData.VerifyHost,
+                                  sizeof (EFI_TLS_VERIFY_HOST)
+                                  );
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
   }
 
   Status = HttpInstance->Tls->SetSessionData (
@@ -708,10 +795,12 @@ TlsConfigureSession (
   //
   // Tls Config Certificate
   //
-  Status = TlsConfigCertificate (HttpInstance);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "TLS Certificate Config Error!\n"));
-    return Status;
+  if (HttpInstance->TlsConfigData.VerifyMethod != EFI_TLS_VERIFY_NONE) {
+    Status = TlsConfigCertificate (HttpInstance);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "TLS Certificate Config Error!\n"));
+      return Status;
+    }
   }
 
   //
