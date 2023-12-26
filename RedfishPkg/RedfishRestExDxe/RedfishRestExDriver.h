@@ -30,8 +30,11 @@
 /// UEFI Driver Model Protocols
 ///
 #include <Protocol/DriverBinding.h>
+#include <Protocol/Http.h>
+#include <Protocol/HttpsTlsPlatformPolicyProtocol.h>
 #include <Protocol/RestEx.h>
 #include <Protocol/ServiceBinding.h>
+#include <Protocol/Tls.h>
 
 ///
 /// Protocol instances
@@ -645,6 +648,29 @@ EFIAPI
 RedfishRestExServiceBindingDestroyChild (
   IN EFI_SERVICE_BINDING_PROTOCOL  *This,
   IN EFI_HANDLE                    ChildHandle
+  );
+
+/**
+  Function to get platform HTTPS TLS Policy.
+
+  @param[in]   This                   Pointer to the EDKII_HTTPS_TLS_PLATFORM_POLICY_PROTOCOL
+                                      instance.
+  @param[in]   HttpHandle             EFI_HTTP_PROTOCOL handle used to transfer HTTP payload.
+  @param[out]  PlatformPolicy         Pointer to retrieve EDKII_PLATFORM_HTTPS_TLS_CONFIG_DATA.
+
+  @retval EFI_SUCCESS                 Platform HTTPS TLS config data is returned in
+                                      PlatformPolicy.
+  @retval EFI_INVALID_PARAMETER       Either HttpHandle or PlatformPolicy is NULL, or both are NULL.
+  @retval EFI_NOT_FOUND               No HTTP protocol insterface is found on HttpHandle.
+  @retval EFI_UNSUPPORTED             HttpProtocolInstance is not the HTTP instance platform
+                                      would like to config.
+**/
+EFI_STATUS
+EFIAPI
+RedfishPlatformGetPolicy (
+  IN   EDKII_HTTPS_TLS_PLATFORM_POLICY_PROTOCOL  *This,
+  IN   EFI_HANDLE                                HttpHandle,
+  OUT  EDKII_PLATFORM_HTTPS_TLS_CONFIG_DATA      *PlatformPolicy
   );
 
 #endif
