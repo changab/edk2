@@ -12,6 +12,8 @@
 #include <Uefi.h>
 #include "RedfishRestExDriver.h"
 
+EFI_HANDLE  mRestExHttpHandle = NULL;
+
 EFI_DRIVER_BINDING_PROTOCOL  gRedfishRestExDriverBinding = {
   RedfishRestExDriverBindingSupported,
   RedfishRestExDriverBindingStart,
@@ -25,6 +27,10 @@ EFI_SERVICE_BINDING_PROTOCOL  mRedfishRestExServiceBinding = {
   RedfishRestExServiceBindingCreateChild,
   RedfishRestExServiceBindingDestroyChild
 };
+
+EDKII_HTTPS_TLS_PLATFORM_POLICY_PROTOCOL  mResfishConfigHandlerTlsPolicyProtocol = {
+                                            RedfishPlatformGetPolicy
+                                            };
 
 /**
   Callback function which provided by user to remove one node in NetDestroyLinkList process.
@@ -78,6 +84,14 @@ RestExDestroyInstance (
 {
   HttpIoDestroyIo (&(Instance->HttpIo));
 
+  if (Instance->RestExHttpContext != NULL) {
+    gBS->UninstallProtocolInterface (
+           Instance->RestExHttpContext->TlsPlatformPolicyHandle,
+           &gEdkiiHttpsTlsPlatformPolicyProtocolGuid,
+           (VOID *)&Instance->RestExHttpContext->TlsPlatformPolicyProtocol
+           );
+    FreePool (Instance->RestExHttpContext);
+  }
   FreePool (Instance);
 }
 
@@ -267,6 +281,99 @@ RestExCreateService (
 }
 
 /**
+  Function to get platform HTTPS TLS Policy.
+
+  @param[in]   This                   Pointer to the EDKII_HTTPS_TLS_PLATFORM_POLICY_PROTOCOL
+                                      instance.
+  @param[in]   HttpHandle             EFI_HTTP_PROTOCOL handle used to transfer HTTP payload.
+  @param[out]  PlatformPolicy         Pointer to retrieve EDKII_PLATFORM_HTTPS_TLS_CONFIG_DATA.
+
+  @retval EFI_SUCCESS                 Platform HTTPS TLS config data is returned in
+                                      PlatformPolicy.
+  @retval EFI_INVALID_PARAMETER       Either HttpHandle or PlatformPolicy is NULL, or both are NULL.
+  @retval EFI_NOT_FOUND               No HTTP protocol insterface is found on HttpHandle.
+  @retval EFI_UNSUPPORTED             HttpProtocolInstance is not the HTTP instance platform
+                                      would like to config.
+**/
+EFI_STATUS
+EFIAPI
+RedfishPlatformGetPolicy (
+  IN   EDKII_HTTPS_TLS_PLATFORM_POLICY_PROTOCOL  *This,
+  IN   EFI_HANDLE                                HttpsHandle,
+  OUT  EDKII_PLATFORM_HTTPS_TLS_CONFIG_DATA      *PlatformPolicy
+  )
+{
+  RESTEX_HTTP_CONTEXT  *RestExHttpContext;
+
+  if (HttpsHandle == NULL || PlatformPolicy == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  RestExHttpContext = REDFISH_HTTP_CONTEXT_FROM_THIS(This);
+  if (HttpsHandle != RestExHttpContext->RestExHttpHandle) {
+    DEBUG((
+      DEBUG_MANAGEABILITY,
+      "%a: Unmatched HTTP protocol interface, HttpsHandle: 0x%x != ThisHttpsHandle: 0x%x.\n",
+      __func__,
+      HttpsHandle,
+       RestExHttpContext->RestExHttpHandle
+      ));
+    return EFI_UNSUPPORTED;
+  }
+  PlatformPolicy->Version.Major       = 1;
+  PlatformPolicy->Version.Minor       = 0;
+  PlatformPolicy->ConnectionEnd       = EfiTlsClient;
+  PlatformPolicy->VerifyMethod        = EFI_TLS_VERIFY_NONE;
+  PlatformPolicy->VerifyHost.Flags    = EFI_TLS_VERIFY_FLAG_NONE;
+  PlatformPolicy->VerifyHost.HostName = "Redfish Service";
+  return EFI_SUCCESS;
+}
+
+/**
+  Initial EDKII_HTTPS_TLS_PLATFORM_POLICY_PROTOCOL to override
+  TLS policy.
+
+  @param[in]  Instance  REST EX internal structure instance.
+
+**/
+VOID
+RedfishHttpsTlsPolicy (
+  IN  RESTEX_INSTANCE  *Instance
+  )
+{
+  EFI_STATUS           Status;
+  RESTEX_HTTP_CONTEXT  *RestExHttpContext;
+
+  RestExHttpContext = AllocateZeroPool (sizeof(RESTEX_HTTP_CONTEXT));
+  if (RestExHttpContext == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a: Allocate memory fail for RESTEX_HTTP_CONTEXT\n", __func__));
+    return;
+  }
+
+  RestExHttpContext->Signature        = RESTEX_HTTP_CONTEXT_SIGNATURE;
+  RestExHttpContext->RestExHttpHandle = Instance->HttpIo.Handle;
+  CopyMem (
+    (VOID *)&RestExHttpContext->TlsPlatformPolicyProtocol,
+    (VOID *)&mResfishConfigHandlerTlsPolicyProtocol,
+    sizeof (EDKII_HTTPS_TLS_PLATFORM_POLICY_PROTOCOL)
+    );
+
+  // Install EDKII_HTTPS_TLS_PLATFORM_POLICY_PROTOCOL;
+  Status = gBS->InstallProtocolInterface (
+                  &RestExHttpContext->TlsPlatformPolicyHandle,
+                  &gEdkiiHttpsTlsPlatformPolicyProtocolGuid,
+                  EFI_NATIVE_INTERFACE,
+                  (VOID *)&RestExHttpContext->TlsPlatformPolicyProtocol
+                  );
+  if (EFI_ERROR(Status)) {
+    FreePool (RestExHttpContext);
+    DEBUG((DEBUG_ERROR, "%a: Fail to install EDKII_HTTPS_TLS_PLATFORM_POLICY_PROTOCOL.\n", __func__));
+    return;
+  }
+  Instance->RestExHttpContext = RestExHttpContext;
+}
+
+/**
   This is the declaration of an EFI image entry point. This entry point is
   the same for UEFI Applications, UEFI OS Loaders, and UEFI Drivers including
   both device drivers and bus drivers.
@@ -285,8 +392,6 @@ RedfishRestExDriverEntryPoint (
   )
 {
   EFI_STATUS  Status;
-
-  Status = EFI_SUCCESS;
 
   //
   // Install the RestEx Driver Binding Protocol.
@@ -641,6 +746,13 @@ RedfishRestExServiceBindingCreateChild (
                   );
   if (EFI_ERROR (Status)) {
     goto ON_ERROR;
+  }
+
+  //
+  // Set Redfish HTTPS TLS policy
+  //
+  if (FixedPcdGetBool (PcdRedfishSkipHttpsTLsVerification)) {
+    RedfishHttpsTlsPolicy (Instance);
   }
 
   Instance->ChildHandle = *ChildHandle;

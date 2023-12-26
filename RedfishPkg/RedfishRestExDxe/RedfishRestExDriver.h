@@ -30,8 +30,11 @@
 /// UEFI Driver Model Protocols
 ///
 #include <Protocol/DriverBinding.h>
+#include <Protocol/Http.h>
+#include <Protocol/HttpsTlsPlatformPolicyProtocol.h>
 #include <Protocol/RestEx.h>
 #include <Protocol/ServiceBinding.h>
+#include <Protocol/Tls.h>
 
 ///
 /// Protocol instances
@@ -54,18 +57,27 @@ typedef struct _RESTEX_SERVICE RESTEX_SERVICE;
 typedef struct _RESTEX_INSTANCE RESTEX_INSTANCE;
 
 ///
+/// RestEx HTTP context
+///
+typedef struct _RESTEX_HTTP_CONTEXT RESTEX_HTTP_CONTEXT;
+
+///
 /// Driver Version
 ///
 #define REDFISH_RESTEX_DRIVER_VERSION  0x0100
 
-#define RESTEX_SERVICE_SIGNATURE   SIGNATURE_32 ('R', 'E', 'S', 'S')
-#define RESTEX_INSTANCE_SIGNATURE  SIGNATURE_32 ('R', 'E', 'I', 'S')
+#define RESTEX_SERVICE_SIGNATURE       SIGNATURE_32 ('R', 'E', 'S', 'S')
+#define RESTEX_INSTANCE_SIGNATURE      SIGNATURE_32 ('R', 'E', 'I', 'S')
+#define RESTEX_HTTP_CONTEXT_SIGNATURE  SIGNATURE_32 ('R', 'H', 'C', 'S')
 
 #define RESTEX_SERVICE_FROM_THIS(a)   \
   CR (a, RESTEX_SERVICE, ServiceBinding, RESTEX_SERVICE_SIGNATURE)
 
 #define RESTEX_INSTANCE_FROM_THIS(a)  \
   CR (a, RESTEX_INSTANCE, RestEx, RESTEX_INSTANCE_SIGNATURE)
+
+#define REDFISH_HTTP_CONTEXT_FROM_THIS(a)  \
+  CR (a, RESTEX_HTTP_CONTEXT, TlsPlatformPolicyProtocol, RESTEX_HTTP_CONTEXT_SIGNATURE)
 
 #define RESTEX_STATE_UNCONFIGED  0
 #define RESTEX_STATE_CONFIGED    1
@@ -93,6 +105,13 @@ struct _RESTEX_SERVICE {
 #define RESTEX_INSTANCE_FLAGS_TLS_RETRY        0x00000001
 #define RESTEX_INSTANCE_FLAGS_TCP_ERROR_RETRY  0x00000002
 
+struct _RESTEX_HTTP_CONTEXT {
+  UINT32                                    Signature;
+  EDKII_HTTPS_TLS_PLATFORM_POLICY_PROTOCOL  TlsPlatformPolicyProtocol;
+  EFI_HANDLE                                TlsPlatformPolicyHandle;
+  EFI_HANDLE                                RestExHttpHandle;
+};
+
 struct _RESTEX_INSTANCE {
   UINT32                     Signature;
   LIST_ENTRY                 Link;
@@ -106,6 +125,8 @@ struct _RESTEX_INSTANCE {
   EFI_HANDLE                 ChildHandle;
 
   EFI_REST_EX_CONFIG_DATA    ConfigData;
+
+  RESTEX_HTTP_CONTEXT        *RestExHttpContext;
 
   //
   // HTTP_IO to access the HTTP service
@@ -645,6 +666,29 @@ EFIAPI
 RedfishRestExServiceBindingDestroyChild (
   IN EFI_SERVICE_BINDING_PROTOCOL  *This,
   IN EFI_HANDLE                    ChildHandle
+  );
+
+/**
+  Function to get platform HTTPS TLS Policy.
+
+  @param[in]   This                   Pointer to the EDKII_HTTPS_TLS_PLATFORM_POLICY_PROTOCOL
+                                      instance.
+  @param[in]   HttpHandle             EFI_HTTP_PROTOCOL handle used to transfer HTTP payload.
+  @param[out]  PlatformPolicy         Pointer to retrieve EDKII_PLATFORM_HTTPS_TLS_CONFIG_DATA.
+
+  @retval EFI_SUCCESS                 Platform HTTPS TLS config data is returned in
+                                      PlatformPolicy.
+  @retval EFI_INVALID_PARAMETER       Either HttpHandle or PlatformPolicy is NULL, or both are NULL.
+  @retval EFI_NOT_FOUND               No HTTP protocol insterface is found on HttpHandle.
+  @retval EFI_UNSUPPORTED             HttpProtocolInstance is not the HTTP instance platform
+                                      would like to config.
+**/
+EFI_STATUS
+EFIAPI
+RedfishPlatformGetPolicy (
+  IN   EDKII_HTTPS_TLS_PLATFORM_POLICY_PROTOCOL  *This,
+  IN   EFI_HANDLE                                HttpHandle,
+  OUT  EDKII_PLATFORM_HTTPS_TLS_CONFIG_DATA      *PlatformPolicy
   );
 
 #endif
