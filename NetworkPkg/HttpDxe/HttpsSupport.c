@@ -134,27 +134,31 @@ IsHttpsUrl (
 /**
   Creates a Tls child handle, open EFI_TLS_PROTOCOL and EFI_TLS_CONFIGURATION_PROTOCOL.
 
-  @param[in]  ImageHandle           The firmware allocated handle for the UEFI image.
-  @param[out] TlsSb                 Pointer to the TLS SERVICE_BINDING_PROTOCOL.
-  @param[out] TlsProto              Pointer to the EFI_TLS_PROTOCOL instance.
-  @param[out] TlsConfiguration      Pointer to the EFI_TLS_CONFIGURATION_PROTOCOL instance.
+  @param[in]  HttpInstance  Pointer to HTTP_PROTOCOL structure.
 
-  @return  The child handle with opened EFI_TLS_PROTOCOL and EFI_TLS_CONFIGURATION_PROTOCOL.
+  @return  EFI_SUCCESS        TLS child handle is returned in HttpInstance->TlsChildHandle
+                              with opened EFI_TLS_PROTOCOL and EFI_TLS_CONFIGURATION_PROTOCOL.
+           EFI_DEVICE_ERROR   TLS service binding protocol is not found.
+           Otherwise          Fail to create TLS chile handle.
 
 **/
-EFI_HANDLE
+EFI_STATUS
 EFIAPI
 TlsCreateChild (
-  IN  EFI_HANDLE                      ImageHandle,
-  OUT EFI_SERVICE_BINDING_PROTOCOL    **TlsSb,
-  OUT EFI_TLS_PROTOCOL                **TlsProto,
-  OUT EFI_TLS_CONFIGURATION_PROTOCOL  **TlsConfiguration
+  IN  HTTP_PROTOCOL  *HttpInstance
   )
 {
+  EFI_HANDLE  ImageHandle;
   EFI_STATUS  Status;
-  EFI_HANDLE  TlsChildHandle;
 
-  TlsChildHandle = 0;
+  //
+  // Use TlsSb to create Tls child and open the TLS protocol.
+  //
+  if (HttpInstance->LocalAddressIsIPv6) {
+    ImageHandle = HttpInstance->Service->Ip6DriverBindingHandle;
+  } else {
+    ImageHandle = HttpInstance->Service->Ip4DriverBindingHandle;
+  }
 
   //
   // Locate TlsServiceBinding protocol.
@@ -162,44 +166,48 @@ TlsCreateChild (
   gBS->LocateProtocol (
          &gEfiTlsServiceBindingProtocolGuid,
          NULL,
-         (VOID **)TlsSb
+         (VOID **)&HttpInstance->TlsSb
          );
-  if (*TlsSb == NULL) {
-    return NULL;
+  if (HttpInstance->TlsSb == NULL) {
+    return EFI_DEVICE_ERROR;
   }
 
-  Status = (*TlsSb)->CreateChild (*TlsSb, &TlsChildHandle);
+  //
+  // Create TLS protocol on HTTP handle, this creates the association between HTTP and TLS
+  // for HTTP driver external usages.
+  //
+  Status = HttpInstance->TlsSb->CreateChild (HttpInstance->TlsSb, &HttpInstance->Handle);
   if (EFI_ERROR (Status)) {
-    return NULL;
+    return Status;
   }
-
+  HttpInstance->TlsChildHandle = HttpInstance->Handle;
   Status = gBS->OpenProtocol (
-                  TlsChildHandle,
+                  HttpInstance->TlsChildHandle,
                   &gEfiTlsProtocolGuid,
-                  (VOID **)TlsProto,
+                  (VOID **)&HttpInstance->Tls,
                   ImageHandle,
-                  TlsChildHandle,
+                  HttpInstance->TlsChildHandle,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
                   );
   if (EFI_ERROR (Status)) {
-    (*TlsSb)->DestroyChild (*TlsSb, TlsChildHandle);
-    return NULL;
+    HttpInstance->TlsSb->DestroyChild (HttpInstance->TlsSb, HttpInstance->TlsChildHandle);
+    return Status;
   }
 
   Status = gBS->OpenProtocol (
-                  TlsChildHandle,
+                  HttpInstance->TlsChildHandle,
                   &gEfiTlsConfigurationProtocolGuid,
-                  (VOID **)TlsConfiguration,
+                  (VOID **)&HttpInstance->TlsConfiguration,
                   ImageHandle,
-                  TlsChildHandle,
+                  HttpInstance->TlsChildHandle,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
                   );
   if (EFI_ERROR (Status)) {
-    (*TlsSb)->DestroyChild (*TlsSb, TlsChildHandle);
-    return NULL;
+    HttpInstance->TlsSb->DestroyChild (HttpInstance->TlsSb, HttpInstance->TlsChildHandle);
+    return Status;
   }
 
-  return TlsChildHandle;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -382,10 +390,25 @@ TlsConfigCertificate (
   UINTN               CertArraySizeInBytes;
   UINTN               CertCount;
   UINT32              ItemDataSize;
+  EFI_TLS_VERIFY      TlsVerifyMethod;
+  UINTN               SessionDataSize;
 
   CACert     = NULL;
   CACertSize = 0;
 
+  SessionDataSize = sizeof (EFI_TLS_VERIFY);
+  Status          = HttpInstance->Tls->GetSessionData (
+                                         HttpInstance->Tls,
+                                         EfiTlsVerifyMethod,
+                                         &TlsVerifyMethod,
+                                         &SessionDataSize
+                                         );
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  if (TlsVerifyMethod == EFI_TLS_VERIFY_NONE) {
+    return EFI_SUCCESS;
+  }
   //
   // Try to read the TlsCaCertificate variable.
   //
@@ -666,6 +689,7 @@ TlsConfigureSession (
     return Status;
   }
 
+
   Status = HttpInstance->Tls->SetSessionData (
                                 HttpInstance->Tls,
                                 EfiTlsVerifyMethod,
@@ -676,7 +700,7 @@ TlsConfigureSession (
     return Status;
   }
 
-  Status = HttpInstance->Tls->SetSessionData (
+  Status = HttpInstance->Tls->SetSessionData(
                                 HttpInstance->Tls,
                                 EfiTlsVerifyHost,
                                 &HttpInstance->TlsConfigData.VerifyHost,
