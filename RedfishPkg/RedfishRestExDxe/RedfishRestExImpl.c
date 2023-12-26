@@ -30,11 +30,19 @@ ResetHttpTslSession (
 
   DEBUG ((DEBUG_MANAGEABILITY, "%a: TCP connection is finished. Could be TSL session closure, reset HTTP instance for the new TLS session.\n", __func__));
 
+  // Reset HTTP configuration, this will also reset TLS on this HTTP instance.
   Status = Instance->HttpIo.Http->Configure (Instance->HttpIo.Http, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a: Error to reset HTTP instance.\n", __func__));
     return Status;
   }
+
+  //
+  // Reset TLS hook on this instance and hook TLS method again for
+  // the newly installed TLS on this HTTP instance.
+  //
+  RestExDestroyTlsHook (Instance);
+  RedfishHookHttpsTlsPolicy (Instance);
 
   Status = Instance->HttpIo.Http->Configure (Instance->HttpIo.Http, &((EFI_REST_EX_HTTP_CONFIG_DATA *)Instance->ConfigData)->HttpConfigData);
   if (EFI_ERROR (Status)) {

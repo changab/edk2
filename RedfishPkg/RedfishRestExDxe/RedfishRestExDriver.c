@@ -12,6 +12,8 @@
 #include <Uefi.h>
 #include "RedfishRestExDriver.h"
 
+EFI_HANDLE  mRestExHttpHandle = NULL;
+
 EFI_DRIVER_BINDING_PROTOCOL  gRedfishRestExDriverBinding = {
   RedfishRestExDriverBindingSupported,
   RedfishRestExDriverBindingStart,
@@ -66,6 +68,37 @@ RestExDestroyChildEntryInHandleBuffer (
 }
 
 /**
+  Destroy the TLS hook on this RestEx instance.
+
+  @param[in]  Instance        The pointer to the RestEx instance.
+
+**/
+VOID
+RestExDestroyTlsHook (
+  IN RESTEX_INSTANCE  *Instance
+  )
+{
+  if (Instance->RestExHttpContext != NULL) {
+    if (Instance->RestExHttpContext->Event != NULL) {
+        gBS->CloseEvent (Instance->RestExHttpContext->Event);
+    }
+    if (Instance->RestExHttpContext->RestExHttpContextProtocol != NULL) {
+
+      // Uninstall gEdkIIRedfishRestExHttpContextProtocol.
+      gBS->UninstallProtocolInterface (
+             Instance->RestExHttpContext->RestExHttpContextProtocolHandle,
+             &gEdkIIRedfishRestExHttpContextProtocolGuid,
+             (VOID *)Instance->RestExHttpContext->RestExHttpContextProtocol
+             );
+
+      FreePool(Instance->RestExHttpContext->RestExHttpContextProtocol);
+    }
+    FreePool (Instance->RestExHttpContext);
+    Instance->RestExHttpContext = NULL;
+  }
+}
+
+/**
   Destroy the RestEx instance and recycle the resources.
 
   @param[in]  Instance        The pointer to the RestEx instance.
@@ -77,7 +110,7 @@ RestExDestroyInstance (
   )
 {
   HttpIoDestroyIo (&(Instance->HttpIo));
-
+  RestExDestroyTlsHook (Instance);
   FreePool (Instance);
 }
 
@@ -265,6 +298,274 @@ RestExCreateService (
   *Service = RestExSb;
   return Status;
 }
+/**
+  Get the RESTEX_HTTP_CONTEXT instance associated with the
+  given TLS protocol instance.
+
+  @param[in]  This                Pointer to the EFI_TLS_PROTOCOL instance.
+
+  @retval RESTEX_HTTP_CONTEXT     The RESTEX_HTTP_CONTEXT instance associated with the
+                                  given TLS protocol instance.
+  @retval NULL                    RESTEX_HTTP_CONTEXT is not found.
+**/
+RESTEX_HTTP_CONTEXT *
+GetRestHttpContextOfTsl (
+  IN  EFI_TLS_PROTOCOL  *This
+  )
+{
+  EFI_STATUS                    Status;
+  UINTN                         NumHandles;
+  EFI_HANDLE                    *ProtocolBuffer;
+  RESTEX_HTTP_CONTEXT_PROTOCOL  *RestExHttpContextProtocol;
+
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEdkIIRedfishRestExHttpContextProtocolGuid,
+                  NULL,
+                  &NumHandles,
+                  &ProtocolBuffer
+                  );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: No gEdkIIRedfishRestExHttpContextProtocolGuid protocol found.\n", __func__));
+    return NULL;
+  }
+  while (NumHandles != 0) {
+    Status = gBS->HandleProtocol (
+                    *(ProtocolBuffer + NumHandles - 1),
+                    &gEdkIIRedfishRestExHttpContextProtocolGuid,
+                    (VOID **)&RestExHttpContextProtocol
+                    );
+    if (!EFI_ERROR (Status)) {
+      if (This == RestExHttpContextProtocol->OrigianlTlsPointer) {
+        return RestExHttpContextProtocol->RestExHttpContext;
+      }
+    }
+    NumHandles--;
+  };
+
+  return NULL;
+}
+
+/**
+  Redfish set TLS session data function to override TLS configuration data as we don't need
+  TLS peer validation on Redfish service.
+
+  @param[in]  This                Pointer to the EFI_TLS_PROTOCOL instance.
+  @param[in]  DataType            TLS session data type.
+  @param[in]  Data                Pointer to session data.
+  @param[in]  DataSize            Total size of session data.
+
+  @retval EFI_SUCCESS             The TLS session data is set successfully.
+  @retval EFI_INVALID_PARAMETER   One or more of the following conditions is TRUE:
+                                  This is NULL.
+                                  Data is NULL.
+                                  DataSize is 0.
+  @retval EFI_UNSUPPORTED         The DataType is unsupported.
+  @retval EFI_ACCESS_DENIED       If the DataType is one of below:
+                                  EfiTlsClientRandom
+                                  EfiTlsServerRandom
+                                  EfiTlsKeyMaterial
+  @retval EFI_NOT_READY           Current TLS session state is NOT
+                                  EfiTlsSessionStateNotStarted.
+  @retval EFI_OUT_OF_RESOURCES    Required system resources could not be allocated.
+**/
+EFI_STATUS
+EFIAPI
+RedfishRestExTlsSetSessionData (
+  IN     EFI_TLS_PROTOCOL           *This,
+  IN     EFI_TLS_SESSION_DATA_TYPE  DataType,
+  IN     VOID                       *Data,
+  IN     UINTN                      DataSize
+  )
+{
+  EFI_STATUS           Status;
+  RESTEX_HTTP_CONTEXT  *RestExHttpContext;
+
+  RestExHttpContext = GetRestHttpContextOfTsl (This);
+  if ((RestExHttpContext == NULL) || (RestExHttpContext->OriginalTlsProtocol.SetSessionData == NULL)) {
+    DEBUG ((DEBUG_ERROR, "%a: Fail to get RESTEX_HTTP_CONTEXT data.\n", __func__));
+    return EFI_INVALID_PARAMETER;
+  }
+  if (DataType == EfiTlsVerifyMethod) {
+
+    // Always set to EFI_TLS_VERIFY_NONE for the Redfish TLS instance.
+    *(( EFI_TLS_VERIFY *)Data) = EFI_TLS_VERIFY_NONE;
+  } else if (DataType == EfiTlsVerifyHost) {
+
+    // Always dont set EfiTlsVerifyHost for the Redfish TLS instance.
+    return EFI_SUCCESS;
+  }
+  //
+  // We have to invoke the original function as there is the TLS internal
+  // information associated with the original EFI TLS protocol interface.
+  //
+  Status = RestExHttpContext->OriginalTlsProtocol.SetSessionData (
+                                                    This,
+                                                    DataType,
+                                                    Data,
+                                                    DataSize
+                                                    );
+  return Status;
+}
+
+/**
+  Callback for TLS protocol install notification.
+
+  @param[in]  Event                 Event whose notification function is being invoked.
+  @param[in]  Context               The pointer to the notification function's context,
+                                    which is implementation-dependent.
+
+**/
+VOID
+EFIAPI
+RedfishRestExTlsInstallation (
+  IN  EFI_EVENT                Event,
+  IN  VOID                     *Context
+  )
+{
+  EFI_STATUS                    Status;
+  RESTEX_INSTANCE               *RestExInstance;
+  RESTEX_HTTP_CONTEXT           *RestExHttpContext;
+  UINTN                         ProtocolBufferSize;
+  EFI_HANDLE                    *ProtocolBuffer;
+  EFI_HANDLE                    Handle;
+  EFI_TLS_PROTOCOL              *TlsProtocol;
+  RESTEX_HTTP_CONTEXT_PROTOCOL  *RestExHttpContextProtocol;
+
+  RestExInstance = (RESTEX_INSTANCE *)Context;
+  if (RestExInstance == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a: RestExInstance is NULL.\n", __func__));
+    return;
+  }
+  RestExHttpContext = RestExInstance->RestExHttpContext;
+  if (RestExHttpContext == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a: RestExHttpContext is NULL.\n", __func__));
+    return;
+  }
+
+  Status = gBS->LocateHandleBuffer (
+                  ByRegisterNotify,
+                  &gEfiTlsProtocolGuid,
+                  RestExHttpContext->TlsInstallRegistration,
+                  &ProtocolBufferSize,
+                  &ProtocolBuffer
+                  );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: No TLS protocol found.\n", __func__));
+    return;
+  }
+
+  //
+  // Only one handle is returned at a time according to UEFI spec.
+  // Check if TLS protocol is installed on Redfish HTTP handle.
+  //
+  if (*ProtocolBuffer == RestExHttpContext->RestExHttpHandle) {
+    Status = gBS->HandleProtocol (
+                    *ProtocolBuffer,
+                    &gEfiTlsProtocolGuid,
+                    (VOID **)&TlsProtocol
+                    );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: No TLS protocol install on the given handle.\n", __func__));
+      return;
+    }
+
+    // Close event as we are going to replace the TLS protocol.
+    Status = gBS->CloseEvent(RestExHttpContext->Event);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: Fail to close the event.\n", __func__));
+      return;
+    }
+    RestExHttpContext->Event                  = NULL;
+    RestExHttpContext->TlsInstallRegistration = NULL;
+
+    // Preserve original TLS functions.
+    CopyMem (
+      (VOID *)&RestExHttpContext->OriginalTlsProtocol,
+      (VOID *)TlsProtocol,
+      sizeof (EFI_TLS_PROTOCOL)
+      );
+
+    // Replace TLS SetSessionData functions.
+    TlsProtocol->SetSessionData = RedfishRestExTlsSetSessionData;
+
+    //
+    // Install a protocol to record the association of original TLS protocol interface
+    // and RestExHttpContext
+    //
+    RestExHttpContextProtocol = AllocatePool (sizeof (RESTEX_HTTP_CONTEXT_PROTOCOL));
+    if (RestExHttpContextProtocol == NULL) {
+      DEBUG ((DEBUG_ERROR, "%a: Can't allocate memory for RESTEX_HTTP_CONTEXT_PROTOCOL.\n", __func__));
+      return;
+    }
+    Handle = NULL;
+    RestExHttpContextProtocol->OrigianlTlsPointer = TlsProtocol;
+    RestExHttpContextProtocol->RestExHttpContext  = RestExHttpContext;
+    Status = gBS->InstallProtocolInterface (
+                    &Handle,
+                    &gEdkIIRedfishRestExHttpContextProtocolGuid,
+                    EFI_NATIVE_INTERFACE,
+                    (VOID *)RestExHttpContextProtocol
+                    );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: Fail to install gEdkIIRedfishRestExHttpContextProtocolGuid.\n", __func__));
+      FreePool(RestExHttpContextProtocol);
+      return;
+    }
+    RestExHttpContext->RestExHttpContextProtocol       = RestExHttpContextProtocol;
+    RestExHttpContext->RestExHttpContextProtocolHandle = Handle;
+  }
+  FreePool (ProtocolBuffer);
+}
+
+/**
+  Lisent to TLS protocol installation to override TLS configuraiton
+  data to skip TLS peer verification, as we don't need the verification
+  on certificate Resfish service.
+
+  @param[in]  Instance  REST EX protocol internal structure instance.
+
+**/
+VOID
+RedfishHookHttpsTlsPolicy (
+  IN  RESTEX_INSTANCE  *Instance
+  )
+{
+  EFI_STATUS           Status;
+  RESTEX_HTTP_CONTEXT  *RestExHttpContext;
+
+  RestExHttpContext = AllocateZeroPool (sizeof(RESTEX_HTTP_CONTEXT));
+  if (RestExHttpContext == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a: Allocate memory fail for RESTEX_HTTP_CONTEXT\n", __func__));
+    return;
+  }
+
+  Status = gBS->CreateEvent (
+                  EVT_NOTIFY_SIGNAL,
+                  TPL_CALLBACK,
+                  RedfishRestExTlsInstallation,
+                  (VOID *)Instance,
+                  &RestExHttpContext->Event
+                  );
+  if (EFI_ERROR (Status)) {
+    FreePool (RestExHttpContext);
+    DEBUG ((DEBUG_ERROR, "%a: Failed to create event for Redfish REST EX TLS override.\n", __func__));
+    return;
+  }
+  Status = gBS->RegisterProtocolNotify (
+                  &gEfiTlsProtocolGuid,
+                  RestExHttpContext->Event,
+                  &RestExHttpContext->TlsInstallRegistration
+                  );
+  if (EFI_ERROR (Status)) {
+    gBS->CloseEvent (RestExHttpContext->Event);
+    FreePool (RestExHttpContext);
+    DEBUG ((DEBUG_ERROR, "%a: Failed to register TLS install notification for Redfish REST EX TLS override.\n", __func__));
+    return;
+  }
+  RestExHttpContext->RestExHttpHandle = Instance->HttpIo.Handle;
+  Instance->RestExHttpContext         = RestExHttpContext;
+}
 
 /**
   This is the declaration of an EFI image entry point. This entry point is
@@ -285,8 +586,6 @@ RedfishRestExDriverEntryPoint (
   )
 {
   EFI_STATUS  Status;
-
-  Status = EFI_SUCCESS;
 
   //
   // Install the RestEx Driver Binding Protocol.
@@ -356,6 +655,20 @@ RedfishRestExDriverBindingSupported (
   IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath OPTIONAL
   )
 {
+  EFI_STATUS  Status;
+  UINT32      *Id;
+
+  Status = gBS->OpenProtocol (
+                  ControllerHandle,
+                  &gEfiCallerIdGuid,
+                  (VOID **)&Id,
+                  This->DriverBindingHandle,
+                  ControllerHandle,
+                  EFI_OPEN_PROTOCOL_GET_PROTOCOL
+                  );
+  if (!EFI_ERROR (Status)) {
+    return EFI_ALREADY_STARTED;
+  }
   //
   // Test for the HttpServiceBinding Protocol.
   //
@@ -641,6 +954,14 @@ RedfishRestExServiceBindingCreateChild (
                   );
   if (EFI_ERROR (Status)) {
     goto ON_ERROR;
+  }
+
+
+  //
+  // Set Redfish HTTPS TLS policy
+  //
+  if (FixedPcdGetBool (PcdRedfishSkipHttpsTLsVerification)) {
+    RedfishHookHttpsTlsPolicy (Instance);
   }
 
   Instance->ChildHandle = *ChildHandle;

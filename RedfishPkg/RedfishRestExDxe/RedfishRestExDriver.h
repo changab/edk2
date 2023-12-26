@@ -30,8 +30,10 @@
 /// UEFI Driver Model Protocols
 ///
 #include <Protocol/DriverBinding.h>
+#include <Protocol/Http.h>
 #include <Protocol/RestEx.h>
 #include <Protocol/ServiceBinding.h>
+#include <Protocol/Tls.h>
 
 ///
 /// Protocol instances
@@ -54,12 +56,22 @@ typedef struct _RESTEX_SERVICE RESTEX_SERVICE;
 typedef struct _RESTEX_INSTANCE RESTEX_INSTANCE;
 
 ///
+/// RestEx HTTP context
+///
+typedef struct _RESTEX_HTTP_CONTEXT RESTEX_HTTP_CONTEXT;
+
+///
+/// RestEx HTTP protocol
+///
+typedef struct _RESTEX_HTTP_CONTEXT_PROTOCOL RESTEX_HTTP_CONTEXT_PROTOCOL;
+
+///
 /// Driver Version
 ///
 #define REDFISH_RESTEX_DRIVER_VERSION  0x0100
 
-#define RESTEX_SERVICE_SIGNATURE   SIGNATURE_32 ('R', 'E', 'S', 'S')
-#define RESTEX_INSTANCE_SIGNATURE  SIGNATURE_32 ('R', 'E', 'I', 'S')
+#define RESTEX_SERVICE_SIGNATURE       SIGNATURE_32 ('R', 'E', 'S', 'S')
+#define RESTEX_INSTANCE_SIGNATURE      SIGNATURE_32 ('R', 'E', 'I', 'S')
 
 #define RESTEX_SERVICE_FROM_THIS(a)   \
   CR (a, RESTEX_SERVICE, ServiceBinding, RESTEX_SERVICE_SIGNATURE)
@@ -93,6 +105,31 @@ struct _RESTEX_SERVICE {
 #define RESTEX_INSTANCE_FLAGS_TLS_RETRY        0x00000001
 #define RESTEX_INSTANCE_FLAGS_TCP_ERROR_RETRY  0x00000002
 
+
+//
+// Structure used to record the association of original
+// TLS protocol and RESTEX_HTTP_CONTEXT.
+//
+struct _RESTEX_HTTP_CONTEXT_PROTOCOL {
+  RESTEX_HTTP_CONTEXT  *RestExHttpContext;
+  EFI_TLS_PROTOCOL     *OrigianlTlsPointer;
+};
+
+struct _RESTEX_HTTP_CONTEXT {
+  //
+  // The HTTP handle associated with this REST EX instance.
+  //
+  EFI_HANDLE                    RestExHttpHandle;
+  //
+  // For HTTPS TLS protocol install notification.
+  //
+  EFI_EVENT                     Event;
+  VOID                          *TlsInstallRegistration;
+  EFI_TLS_PROTOCOL              OriginalTlsProtocol;
+  RESTEX_HTTP_CONTEXT_PROTOCOL  *RestExHttpContextProtocol;
+  EFI_HANDLE                    RestExHttpContextProtocolHandle;
+};
+
 struct _RESTEX_INSTANCE {
   UINT32                     Signature;
   LIST_ENTRY                 Link;
@@ -106,6 +143,8 @@ struct _RESTEX_INSTANCE {
   EFI_HANDLE                 ChildHandle;
 
   EFI_REST_EX_CONFIG_DATA    ConfigData;
+
+  RESTEX_HTTP_CONTEXT        *RestExHttpContext;
 
   //
   // HTTP_IO to access the HTTP service
@@ -647,4 +686,27 @@ RedfishRestExServiceBindingDestroyChild (
   IN EFI_HANDLE                    ChildHandle
   );
 
+/**
+  Lisent to TLS protocol installation to override TLS configuraiton
+  data to skip TLS peer verification, as we don't need the verification
+  on certificate Resfish service.
+
+  @param[in]  Instance  REST EX protocol internal structure instance.
+
+**/
+VOID
+RedfishHookHttpsTlsPolicy (
+  IN  RESTEX_INSTANCE  *Instance
+  );
+
+/**
+  Destroy the TLS hook on this RestEx instance.
+
+  @param[in]  Instance        The pointer to the RestEx instance.
+
+**/
+VOID
+RestExDestroyTlsHook (
+  IN RESTEX_INSTANCE  *Instance
+  );
 #endif
