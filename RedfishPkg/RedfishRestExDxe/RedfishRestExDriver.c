@@ -76,8 +76,26 @@ RestExDestroyInstance (
   IN RESTEX_INSTANCE  *Instance
   )
 {
-  HttpIoDestroyIo (&(Instance->HttpIo));
+  EFI_STATUS  Status;
 
+  if ((Instance != NULL) &&
+      (Instance->RestExHttpsContext != NULL) &&
+      (Instance->RestExHttpsContext->TlsConfigDataProtocolInstalled)
+      )
+  {
+    Status = gBS->UninstallProtocolInterface (
+                    Instance->HttpIo.Handle,
+                    &gEdkiiHttpsTlsConfigDataProtocolGuid,
+                    (VOID *)&Instance->RestExHttpsContext->TlsConfigDataProtocol
+                    );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: Fail to uninstall gEdkiiHttpsTlsConfigDataProtocolGuid.\n", __func__));
+    }
+
+    FreePool (Instance->RestExHttpsContext);
+  }
+
+  HttpIoDestroyIo (&(Instance->HttpIo));
   FreePool (Instance);
 }
 
@@ -267,6 +285,56 @@ RestExCreateService (
 }
 
 /**
+  Initial EDKII_HTTPS_TLS_CONFIG_DATA_PROTOCOL for Redfish REST EX TLS.
+
+  @param[in]  Instance  REST EX internal structure instance.
+
+**/
+VOID
+RedfishHttpsTlsConfigData (
+  IN  RESTEX_INSTANCE  *Instance
+  )
+{
+  EFI_STATUS            Status;
+  RESTEX_HTTPS_CONTEXT  *RestExHttpsContext;
+
+  RestExHttpsContext = AllocateZeroPool (sizeof (RESTEX_HTTPS_CONTEXT));
+  if (RestExHttpsContext == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a: Allocate memory fail for RESTEX_HTTPS_CONTEXT\n", __func__));
+    return;
+  }
+
+  if (Instance->HttpIo.Handle == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a: Invalid HTTP handle.\n", __func__));
+    return;
+  }
+
+  RestExHttpsContext->Signature                                                    = RESTEX_HTTPS_CONTEXT_SIGNATURE;
+  RestExHttpsContext->TlsConfigDataProtocol.Version.Major                          = 1;
+  RestExHttpsContext->TlsConfigDataProtocol.Version.Minor                          = 0;
+  RestExHttpsContext->TlsConfigDataProtocol.HttpsTlsConfigData.ConnectionEnd       = EfiTlsClient;
+  RestExHttpsContext->TlsConfigDataProtocol.HttpsTlsConfigData.VerifyMethod        = EFI_TLS_VERIFY_NONE;
+  RestExHttpsContext->TlsConfigDataProtocol.HttpsTlsConfigData.VerifyHost.Flags    = EFI_TLS_VERIFY_FLAG_NONE;
+  RestExHttpsContext->TlsConfigDataProtocol.HttpsTlsConfigData.VerifyHost.HostName = "Redfish Service";
+
+  // Install EDKII_HTTPS_TLS_CONFIG_DATA_PROTOCOL;
+  Status = gBS->InstallProtocolInterface (
+                  &Instance->HttpIo.Handle,
+                  &gEdkiiHttpsTlsConfigDataProtocolGuid,
+                  EFI_NATIVE_INTERFACE,
+                  (VOID *)&RestExHttpsContext->TlsConfigDataProtocol
+                  );
+  if (EFI_ERROR (Status)) {
+    FreePool (RestExHttpsContext);
+    DEBUG ((DEBUG_ERROR, "%a: Fail to install EDKII_HTTPS_TLS_CONFIG_DATA_PROTOCOL.\n", __func__));
+    return;
+  }
+
+  RestExHttpsContext->TlsConfigDataProtocolInstalled = TRUE;
+  Instance->RestExHttpsContext                       = RestExHttpsContext;
+}
+
+/**
   This is the declaration of an EFI image entry point. This entry point is
   the same for UEFI Applications, UEFI OS Loaders, and UEFI Drivers including
   both device drivers and bus drivers.
@@ -285,8 +353,6 @@ RedfishRestExDriverEntryPoint (
   )
 {
   EFI_STATUS  Status;
-
-  Status = EFI_SUCCESS;
 
   //
   // Install the RestEx Driver Binding Protocol.
@@ -697,6 +763,13 @@ RedfishRestExServiceBindingCreateChild (
            );
 
     goto ON_ERROR;
+  }
+
+  //
+  // Set Redfish HTTPS TLS configuration data.
+  //
+  if (FixedPcdGetBool (PcdRedfishRestExHttpsTlsConfigData)) {
+    RedfishHttpsTlsConfigData (Instance);
   }
 
   //
