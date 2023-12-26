@@ -76,14 +76,6 @@ typedef struct {
   EFI_HTTP_METHOD           Method;
 } HTTP_TCP_TOKEN_WRAP;
 
-typedef struct {
-  EFI_TLS_VERSION           Version;
-  EFI_TLS_CONNECTION_END    ConnectionEnd;
-  EFI_TLS_VERIFY            VerifyMethod;
-  EFI_TLS_VERIFY_HOST       VerifyHost;
-  EFI_TLS_SESSION_STATE     SessionState;
-} TLS_CONFIG_DATA;
-
 //
 // Callback data for HTTP_PARSER_CALLBACK()
 //
@@ -172,7 +164,7 @@ typedef struct _HTTP_PROTOCOL {
 
   EFI_SERVICE_BINDING_PROTOCOL      *TlsSb;
   EFI_HANDLE                        TlsChildHandle; /// Tls ChildHandle
-  TLS_CONFIG_DATA                   TlsConfigData;
+  HTTPS_TLS_CONFIG_DATA             TlsConfigData;
   EFI_TLS_PROTOCOL                  *Tls;
   EFI_TLS_CONFIGURATION_PROTOCOL    *TlsConfiguration;
   EFI_TLS_SESSION_STATE             TlsSessionState;

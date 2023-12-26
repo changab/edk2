@@ -48,6 +48,7 @@
 #include <Protocol/Tls.h>
 #include <Protocol/TlsConfig.h>
 #include <Protocol/HttpCallback.h>
+#include <Protocol/HttpsTlsConfigDataProtocol.h>
 
 #include <Guid/ImageAuthentication.h>
 //
