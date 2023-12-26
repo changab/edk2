@@ -30,8 +30,10 @@
 /// UEFI Driver Model Protocols
 ///
 #include <Protocol/DriverBinding.h>
+#include <Protocol/HttpsTlsConfigDataProtocol.h>
 #include <Protocol/RestEx.h>
 #include <Protocol/ServiceBinding.h>
+#include <Protocol/Tls.h>
 
 ///
 /// Protocol instances
@@ -54,18 +56,27 @@ typedef struct _RESTEX_SERVICE RESTEX_SERVICE;
 typedef struct _RESTEX_INSTANCE RESTEX_INSTANCE;
 
 ///
+/// RestEx HTTP context
+///
+typedef struct _RESTEX_HTTPS_CONTEXT RESTEX_HTTPS_CONTEXT;
+
+///
 /// Driver Version
 ///
 #define REDFISH_RESTEX_DRIVER_VERSION  0x0100
 
-#define RESTEX_SERVICE_SIGNATURE   SIGNATURE_32 ('R', 'E', 'S', 'S')
-#define RESTEX_INSTANCE_SIGNATURE  SIGNATURE_32 ('R', 'E', 'I', 'S')
+#define RESTEX_SERVICE_SIGNATURE        SIGNATURE_32 ('R', 'E', 'S', 'S')
+#define RESTEX_INSTANCE_SIGNATURE       SIGNATURE_32 ('R', 'E', 'I', 'S')
+#define RESTEX_HTTPS_CONTEXT_SIGNATURE  SIGNATURE_32 ('R', 'H', 'C', 'S')
 
 #define RESTEX_SERVICE_FROM_THIS(a)   \
   CR (a, RESTEX_SERVICE, ServiceBinding, RESTEX_SERVICE_SIGNATURE)
 
 #define RESTEX_INSTANCE_FROM_THIS(a)  \
   CR (a, RESTEX_INSTANCE, RestEx, RESTEX_INSTANCE_SIGNATURE)
+
+#define REDFISH_HTTPS_CONTEXT_FROM_THIS(a)  \
+  CR (a, RESTEX_HTTPS_CONTEXT, TlsConfigDataProtocol, RESTEX_HTTPS_CONTEXT_SIGNATURE)
 
 #define RESTEX_STATE_UNCONFIGED  0
 #define RESTEX_STATE_CONFIGED    1
@@ -93,6 +104,12 @@ struct _RESTEX_SERVICE {
 #define RESTEX_INSTANCE_FLAGS_TLS_RETRY        0x00000001
 #define RESTEX_INSTANCE_FLAGS_TCP_ERROR_RETRY  0x00000002
 
+struct _RESTEX_HTTPS_CONTEXT {
+  UINT32                                    Signature;
+  EDKII_HTTPS_TLS_CONFIG_DATA_PROTOCOL      TlsConfigDataProtocol;
+  BOOLEAN                                   TlsConfigDataProtocolInstalled;
+};
+
 struct _RESTEX_INSTANCE {
   UINT32                     Signature;
   LIST_ENTRY                 Link;
@@ -106,6 +123,8 @@ struct _RESTEX_INSTANCE {
   EFI_HANDLE                 ChildHandle;
 
   EFI_REST_EX_CONFIG_DATA    ConfigData;
+
+  RESTEX_HTTPS_CONTEXT       *RestExHttpsContext;
 
   //
   // HTTP_IO to access the HTTP service

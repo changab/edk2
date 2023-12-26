@@ -57,11 +57,13 @@
   gEfiHttpServiceBindingProtocolGuid              ## TO_START
   gEfiHttpProtocolGuid                            ## TO_START
   gEfiDevicePathProtocolGuid                      ## TO_START
+  gEdkiiHttpsTlsConfigDataProtocolGuid            ## PRODUCED
 
 [Pcd]
   gEfiRedfishPkgTokenSpaceGuid.PcdRedfishRestExServiceAccessModeInBand ## CONSUMES
   gEfiRedfishPkgTokenSpaceGuid.PcdRedfishRestExChunkRequestMode        ## CONSUMES
   gEfiRedfishPkgTokenSpaceGuid.PcdRedfishRestExAddingExpect            ## CONSUMES
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishRestExHttpsTlsConfigData      ## CONSUMES
 
 [UserExtensions.TianoCore."ExtraFiles"]
   RedfishRestExDxeExtra.uni
