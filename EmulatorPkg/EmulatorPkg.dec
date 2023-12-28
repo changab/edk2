@@ -84,8 +84,8 @@
   # to Redfish simulator.
   # https://github.com/DMTF/Redfish-Profile-Simulator
   # The user ID and password are fixed as below.
-  gEmulatorPkgTokenSpaceGuid.PcdRedfishServiceUserId|"admin"|VOID*|0x00001022
-  gEmulatorPkgTokenSpaceGuid.PcdRedfishServicePassword|"pwd123456"|VOID*|0x00001023
+  gEmulatorPkgTokenSpaceGuid.PcdRedfishServiceUserId|"root"|VOID*|0x00001022
+  gEmulatorPkgTokenSpaceGuid.PcdRedfishServicePassword|"0penBmc"|VOID*|0x00001023
   gEmulatorPkgTokenSpaceGuid.PcdPersistentMemorySize|0x4000000|UINT32|0x00001024
 
 [PcdsFixedAtBuild, PcdsPatchableInModule]

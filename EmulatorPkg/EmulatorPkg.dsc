@@ -39,7 +39,15 @@
   #
   # Redfish definition
   #
-  DEFINE REDFISH_ENABLE = FALSE
+  DEFINE REDFISH_ENABLE = TRUE
+  DEFINE REDFISH_CLIENT = TRUE
+
+!if $(REDFISH_ENABLE) == TRUE
+  DEFINE NETWORK_SNP_ENABLE       = TRUE
+  DEFINE NETWORK_IP6_ENABLE       = TRUE
+  DEFINE NETWORK_TLS_ENABLE       = TRUE
+  DEFINE NETWORK_HTTP_ENABLE      = TRUE
+!endif
 
 [SkuIds]
   0|DEFAULT
@@ -104,10 +112,24 @@
   #
   PlatformBootManagerLib|EmulatorPkg/Library/PlatformBmLib/PlatformBmLib.inf
   KeyMapLib|EmulatorPkg/Library/KeyMapLibNull/KeyMapLibNull.inf
-  !if $(REDFISH_ENABLE) == TRUE
-    RedfishPlatformHostInterfaceLib|EmulatorPkg/Library/RedfishPlatformHostInterfaceLib/RedfishPlatformHostInterfaceLib.inf
-    RedfishPlatformCredentialLib|EmulatorPkg/Library/RedfishPlatformCredentialLib/RedfishPlatformCredentialLib.inf
-  !endif
+
+!if $(REDFISH_ENABLE) == TRUE
+  !include RedfishPkg/RedfishLibs.dsc.inc
+
+  RedfishPlatformHostInterfaceLib|EmulatorPkg/Library/RedfishPlatformHostInterfaceLib/RedfishPlatformHostInterfaceLib.inf
+  RedfishPlatformCredentialLib|EmulatorPkg/Library/RedfishPlatformCredentialLib/RedfishPlatformCredentialLib.inf
+  RedfishContentCodingLib|RedfishPkg/Library/RedfishContentCodingLibNull/RedfishContentCodingLibNull.inf
+  TlsLib|CryptoPkg/Library/TlsLib/TlsLib.inf
+  BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
+  OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLibFull.inf
+  IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
+  RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
+!endif
+
+!if $(REDFISH_CLIENT) == TRUE
+  !include RedfishClientPkg/RedfishClientLibs.dsc.inc
+!endif
+
   #
   # Misc
   #
@@ -219,7 +241,7 @@
 [PcdsFixedAtBuild]
   gEfiMdeModulePkgTokenSpaceGuid.PcdImageProtectionPolicy|0x00000000
   gEfiMdeModulePkgTokenSpaceGuid.PcdResetOnMemoryTypeInformationChange|FALSE
-  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000040
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80C00040
   gEfiMdePkgTokenSpaceGuid.PcdReportStatusCodePropertyMask|0x0f
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x1f
   gEfiMdeModulePkgTokenSpaceGuid.PcdMaxSizeNonPopulateCapsule|0x0
@@ -260,7 +282,7 @@
   gEmulatorPkgTokenSpaceGuid.PcdEmuGop|L"GOP Window"
   gEmulatorPkgTokenSpaceGuid.PcdEmuFileSystem|L"."
   gEmulatorPkgTokenSpaceGuid.PcdEmuSerialPort|L"/dev/ttyS0"
-  gEmulatorPkgTokenSpaceGuid.PcdEmuNetworkInterface|L"en0"
+  gEmulatorPkgTokenSpaceGuid.PcdEmuNetworkInterface|L"1"  # office 1, home: 2
 
   gEmulatorPkgTokenSpaceGuid.PcdEmuCpuModel|L"Intel(R) Processor Model"
   gEmulatorPkgTokenSpaceGuid.PcdEmuCpuSpeed|L"3000"
@@ -275,9 +297,14 @@
   # Below is the MAC address of network adapter on EDK2 Emulator platform.
   # You can use ifconfig under EFI shell to get the MAC address of network adapter on EDK2 Emulator platform.
   #
-  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishRestExServiceDevicePath.DevicePath|{DEVICE_PATH("MAC(000000000000,0x1)")}
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishRestExServiceDevicePath.DevicePath|{DEVICE_PATH("MAC(88A4C20177AA,0x1)")}
   gEfiRedfishPkgTokenSpaceGuid.PcdRedfishRestExServiceAccessModeInBand|False
   gEfiRedfishPkgTokenSpaceGuid.PcdRedfishDiscoverAccessModeInBand|False
+
+  gEmulatorPkgTokenSpaceGuid.PcdRedfishServiceStopIfSecureBootDisabled|False
+  gEmulatorPkgTokenSpaceGuid.PcdRedfishServiceStopIfExitbootService|False
+
+  gEfiRedfishClientPkgTokenSpaceGuid.PcdRedfishServiceEtagSupported|False
 !endif
 
 [PcdsDynamicDefault.common.DEFAULT]
@@ -288,7 +315,7 @@
 [PcdsDynamicHii.common.DEFAULT]
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutColumn|L"Setup"|gEmuSystemConfigGuid|0x0|80
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutRow|L"Setup"|gEmuSystemConfigGuid|0x4|25
-  gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|L"Timeout"|gEfiGlobalVariableGuid|0x0|10
+  gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|L"Timeout"|gEfiGlobalVariableGuid|0x0|30
 
 [Components]
 !if "IA32" in $(ARCH) || "X64" in $(ARCH)
@@ -481,8 +508,13 @@
 
 !if $(REDFISH_ENABLE) == TRUE
   EmulatorPkg/Application/RedfishPlatformConfig/RedfishPlatformConfig.inf
+
+  !include RedfishPkg/RedfishComponents.dsc.inc
 !endif
-!include RedfishPkg/Redfish.dsc.inc
+
+!if $(REDFISH_CLIENT) == TRUE
+  !include RedfishClientPkg/RedfishClientComponents.dsc.inc
+!endif
 
 [BuildOptions]
   #
