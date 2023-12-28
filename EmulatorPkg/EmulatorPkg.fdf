@@ -212,6 +212,7 @@ INF  EmulatorPkg/EmuSnpDxe/EmuSnpDxe.inf
 # EFI Redfish drivers
 #
 !include RedfishPkg/Redfish.fdf.inc
+!include RedfishClientPkg/RedfishClient.fdf.inc
 
 INF FatPkg/EnhancedFatDxe/Fat.inf
 
