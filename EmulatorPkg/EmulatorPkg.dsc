@@ -305,6 +305,20 @@
   gEmulatorPkgTokenSpaceGuid.PcdRedfishServiceStopIfExitbootService|False
 
   gEfiRedfishClientPkgTokenSpaceGuid.PcdRedfishServiceEtagSupported|False
+
+  #
+  # Redfish Debug enablement
+  #
+  # 0x0000000000000001  RedfishPlatformConfigDxe driver debug enabled.
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishDebugCategory|0
+  #   0x00000001  x-uefi-redfish string database message enabled
+  #   0x00000002  Debug Message for dumping formset
+  #   0x00000004  Debug Message for x-uefi-redfish searching result
+  #   0x00000008  Debug Message for x-uefi-redfish Regular Expression searching result
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishPlatformConfigDebugProperty|0
+
+ # Redfish Platform Configure DXE driver feature enablement
+  gEfiRedfishPkgTokenSpaceGuid.PcdRedfishPlatformConfigFeatureProperty|0
 !endif
 
 [PcdsDynamicDefault.common.DEFAULT]
