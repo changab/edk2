@@ -177,4 +177,35 @@ DumpBuffer (
   IN  UINTN  BufferSize
   );
 
+/**
+  This function reads current time in nanoseconds and return it to caller.
+
+  @return The elapsed time in nanoseconds.
+
+**/
+UINT64
+RedfishPerformanceStart (
+  VOID
+  );
+
+/**
+  This function takes the StartTime returned from RedfishPerformanceStart()
+  and shows the time between StartTime and the time calling this function
+  in millisecond. Message is optional and can be used to tell the meaning
+  of this time.
+
+  @param[in]  ErrorLevel  DEBUG macro error level
+  @param[in]  Message     Message string
+  @param[in]  StartTime   Time value returned from RedfishPerformanceStart()
+
+  @retval     EFI_SUCCESS         Performance measurement is done successfully.
+  @retval     Others              Errors occur.
+**/
+EFI_STATUS
+RedfishPerformanceEnd (
+  IN UINTN        ErrorLevel,
+  IN CONST CHAR8  *Message OPTIONAL,
+  IN UINT64       StartTime
+  );
+
 #endif

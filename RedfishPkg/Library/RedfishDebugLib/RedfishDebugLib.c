@@ -15,6 +15,7 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/RedfishDebugLib.h>
 #include <Library/RedfishHttpLib.h>
+#include <Library/TimerLib.h>
 #include <Library/UefiLib.h>
 
 #ifndef IS_EMPTY_STRING
@@ -372,6 +373,56 @@ DumpBuffer (
   }
 
   DEBUG ((ErrorLevel, "\n"));
+
+  return EFI_SUCCESS;
+}
+
+/**
+  This function reads current time in nanoseconds and return it to caller.
+
+  @return The elapsed time in nanoseconds.
+
+**/
+UINT64
+RedfishPerformanceStart (
+  VOID
+  )
+{
+  return GetTimeInNanoSecond (GetPerformanceCounter ());
+}
+
+/**
+  This function takes the StartTime returned from RedfishPerformanceStart()
+  and shows the time between StartTime and the time calling this function
+  in millisecond. Message is optional and can be used to tell the meaning
+  of this time.
+
+  @param[in]  ErrorLevel  DEBUG macro error level
+  @param[in]  Message     Message string
+  @param[in]  StartTime   Time value returned from RedfishPerformanceStart()
+
+  @retval     EFI_SUCCESS         Performance measurement is done successfully.
+  @retval     Others              Errors occur.
+**/
+EFI_STATUS
+RedfishPerformanceEnd (
+  IN UINTN        ErrorLevel,
+  IN CONST CHAR8  *Message OPTIONAL,
+  IN UINT64       StartTime
+  )
+{
+  UINT64  EndTime;
+  UINT64  TimeTake;
+
+  EndTime = GetTimeInNanoSecond (GetPerformanceCounter ());
+
+  if (StartTime > EndTime) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  TimeTake = EndTime - StartTime;
+  TimeTake = DivU64x32 (TimeTake, 1000000);
+  DEBUG ((ErrorLevel, "%a: %ld ms\n", (Message == NULL ? "" : Message), TimeTake));
 
   return EFI_SUCCESS;
 }
