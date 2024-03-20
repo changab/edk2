@@ -2,7 +2,7 @@
   The implementation of EDKII Redfish Platform Config Protocol.
 
   (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP<BR>
-  Copyright (c) 2022-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+  Copyright (c) 2022-2024, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.<BR>
 
   SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -656,8 +656,7 @@ GetStatementPrivateByConfigureLangRegex (
               ++StatementList->Count;
             }
           } else {
-            DEBUG ((DEBUG_ERROR, "%a: HiiStatementPrivate->DescriptionStr is NULL, x-uefi-string has something wrong.\n", __func__));
-            ASSERT (FALSE);
+            DEBUG ((REDFISH_PLATFORM_CONFIG_DEBUG_CONFIG_LANG_REGEX, "%a: HiiStatementPrivate->DescriptionStr is NULL, this may be x-uefi-string for allowable values.\n", __func__));
           }
         }
 
@@ -841,16 +840,16 @@ ReleaseXuefiStringDatabase (
     ThisDatabase = (REDFISH_X_UEFI_STRING_DATABASE *)GetFirstNode (&FormsetPrivate->XuefiRedfishStringDatabase);
     while (!EndDatabase) {
       // Walk through string arrays.
-      if (!IsListEmpty (&ThisDatabase->XuefiRefishStringArrays)) {
+      if (!IsListEmpty (&ThisDatabase->XuefiRedfishStringArrays)) {
         EndArray        = FALSE;
-        ThisStringArray = (REDFISH_X_UEFI_STRINGS_ARRAY *)GetFirstNode (&ThisDatabase->XuefiRefishStringArrays);
+        ThisStringArray = (REDFISH_X_UEFI_STRINGS_ARRAY *)GetFirstNode (&ThisDatabase->XuefiRedfishStringArrays);
         while (!EndArray) {
           // Remove this array
           FreePool (ThisStringArray->ArrayEntryAddress);
-          EndArray       = IsNodeAtEnd (&ThisDatabase->XuefiRefishStringArrays, &ThisStringArray->NextArray);
+          EndArray       = IsNodeAtEnd (&ThisDatabase->XuefiRedfishStringArrays, &ThisStringArray->NextArray);
           PreStringArray = ThisStringArray;
           if (!EndArray) {
-            ThisStringArray = (REDFISH_X_UEFI_STRINGS_ARRAY *)GetNextNode (&ThisDatabase->XuefiRefishStringArrays, &ThisStringArray->NextArray);
+            ThisStringArray = (REDFISH_X_UEFI_STRINGS_ARRAY *)GetNextNode (&ThisDatabase->XuefiRedfishStringArrays, &ThisStringArray->NextArray);
           }
 
           RemoveEntryList (&PreStringArray->NextArray);
@@ -861,13 +860,13 @@ ReleaseXuefiStringDatabase (
       //
       // Remove this database
       //
-      EndDatabase = IsNodeAtEnd (&FormsetPrivate->XuefiRedfishStringDatabase, &ThisDatabase->NextXuefiRefishLanguage);
+      EndDatabase = IsNodeAtEnd (&FormsetPrivate->XuefiRedfishStringDatabase, &ThisDatabase->NextXuefiRedfishLanguage);
       PreDatabase = ThisDatabase;
       if (!EndDatabase) {
-        ThisDatabase = (REDFISH_X_UEFI_STRING_DATABASE *)GetNextNode (&FormsetPrivate->XuefiRedfishStringDatabase, &ThisDatabase->NextXuefiRefishLanguage);
+        ThisDatabase = (REDFISH_X_UEFI_STRING_DATABASE *)GetNextNode (&FormsetPrivate->XuefiRedfishStringDatabase, &ThisDatabase->NextXuefiRedfishLanguage);
       }
 
-      RemoveEntryList (&PreDatabase->NextXuefiRefishLanguage);
+      RemoveEntryList (&PreDatabase->NextXuefiRedfishLanguage);
       FreePool (PreDatabase);
     }
   }
@@ -1018,7 +1017,7 @@ NewRedfishXuefiStringArray (
   }
 
   XuefiRedfishStringDatabase->StringsArrayBlocks++;
-  InsertTailList (&XuefiRedfishStringDatabase->XuefiRefishStringArrays, &ArrayAddress->NextArray);
+  InsertTailList (&XuefiRedfishStringDatabase->XuefiRedfishStringArrays, &ArrayAddress->NextArray);
   return EFI_SUCCESS;
 }
 
@@ -1053,12 +1052,12 @@ GetExistOrCreateXuefiStringDatabase (
         break;
       }
 
-      if (IsNodeAtEnd (&FormsetPrivate->XuefiRedfishStringDatabase, &XuefiRedfishStringDatabase->NextXuefiRefishLanguage)) {
+      if (IsNodeAtEnd (&FormsetPrivate->XuefiRedfishStringDatabase, &XuefiRedfishStringDatabase->NextXuefiRedfishLanguage)) {
         break;
       }
 
       XuefiRedfishStringDatabase = \
-        (REDFISH_X_UEFI_STRING_DATABASE *)GetNextNode (&FormsetPrivate->XuefiRedfishStringDatabase, &XuefiRedfishStringDatabase->NextXuefiRefishLanguage);
+        (REDFISH_X_UEFI_STRING_DATABASE *)GetNextNode (&FormsetPrivate->XuefiRedfishStringDatabase, &XuefiRedfishStringDatabase->NextXuefiRedfishLanguage);
     }
   }
 
@@ -1070,8 +1069,8 @@ GetExistOrCreateXuefiStringDatabase (
       return NULL;
     }
 
-    InitializeListHead (&XuefiRedfishStringDatabase->NextXuefiRefishLanguage);
-    InitializeListHead (&XuefiRedfishStringDatabase->XuefiRefishStringArrays);
+    InitializeListHead (&XuefiRedfishStringDatabase->NextXuefiRedfishLanguage);
+    InitializeListHead (&XuefiRedfishStringDatabase->XuefiRedfishStringArrays);
     XuefiRedfishStringDatabase->StringsArrayBlocks   = 0;
     XuefiRedfishStringDatabase->XuefiRedfishLanguage = HiiStringPackageHeader->Language;
 
@@ -1089,7 +1088,7 @@ GetExistOrCreateXuefiStringDatabase (
       ));
 
     // Link string database to FormsetPrivate.
-    InsertTailList (&FormsetPrivate->XuefiRedfishStringDatabase, &XuefiRedfishStringDatabase->NextXuefiRefishLanguage);
+    InsertTailList (&FormsetPrivate->XuefiRedfishStringDatabase, &XuefiRedfishStringDatabase->NextXuefiRedfishLanguage);
   }
 
   return XuefiRedfishStringDatabase;
@@ -1169,9 +1168,9 @@ RedfishXuefiStringInsertDatabase (
 
   // Insert string to x-uefi-redfish string array.
   StringIdOffset = (UINTN)StringId;
-  ThisArray      = (REDFISH_X_UEFI_STRINGS_ARRAY *)GetFirstNode (&XuefiRedfishStringDatabase->XuefiRefishStringArrays);
+  ThisArray      = (REDFISH_X_UEFI_STRINGS_ARRAY *)GetFirstNode (&XuefiRedfishStringDatabase->XuefiRedfishStringArrays);
   while (StringIdOffset >= X_UEFI_REDFISH_STRING_ARRAY_ENTRY_NUMBER) {
-    ThisArray       = (REDFISH_X_UEFI_STRINGS_ARRAY *)GetNextNode (&XuefiRedfishStringDatabase->XuefiRefishStringArrays, &ThisArray->NextArray);
+    ThisArray       = (REDFISH_X_UEFI_STRINGS_ARRAY *)GetNextNode (&XuefiRedfishStringDatabase->XuefiRedfishStringArrays, &ThisArray->NextArray);
     StringIdOffset -= X_UEFI_REDFISH_STRING_ARRAY_ENTRY_NUMBER;
   }
 
@@ -1433,16 +1432,16 @@ GetXuefiStringAndLangByStringId (
       *Language = XuefiRedfishStringDatabase->XuefiRedfishLanguage;
     }
 
-    StringArray = (REDFISH_X_UEFI_STRINGS_ARRAY *)GetFirstNode (&XuefiRedfishStringDatabase->XuefiRefishStringArrays);
+    StringArray = (REDFISH_X_UEFI_STRINGS_ARRAY *)GetFirstNode (&XuefiRedfishStringDatabase->XuefiRedfishStringArrays);
 
     // Loop to the correct string array.
     StringIndex = StringId;
     while (StringIndex >= X_UEFI_REDFISH_STRING_ARRAY_ENTRY_NUMBER) {
-      if (IsNodeAtEnd (&XuefiRedfishStringDatabase->XuefiRefishStringArrays, &StringArray->NextArray)) {
-        goto ErrorEixt;
+      if (IsNodeAtEnd (&XuefiRedfishStringDatabase->XuefiRedfishStringArrays, &StringArray->NextArray)) {
+        goto ErrorExit;
       }
 
-      StringArray  = (REDFISH_X_UEFI_STRINGS_ARRAY *)GetNextNode (&XuefiRedfishStringDatabase->XuefiRefishStringArrays, &StringArray->NextArray);
+      StringArray  = (REDFISH_X_UEFI_STRINGS_ARRAY *)GetNextNode (&XuefiRedfishStringDatabase->XuefiRedfishStringArrays, &StringArray->NextArray);
       StringIndex -= X_UEFI_REDFISH_STRING_ARRAY_ENTRY_NUMBER;
     }
 
@@ -1466,17 +1465,17 @@ GetXuefiStringAndLangByStringId (
       return EFI_SUCCESS;
     }
 
-    if (IsNodeAtEnd (&FormsetPrivate->XuefiRedfishStringDatabase, &XuefiRedfishStringDatabase->NextXuefiRefishLanguage)) {
+    if (IsNodeAtEnd (&FormsetPrivate->XuefiRedfishStringDatabase, &XuefiRedfishStringDatabase->NextXuefiRedfishLanguage)) {
       return EFI_NOT_FOUND;
     }
 
     XuefiRedfishStringDatabase = (REDFISH_X_UEFI_STRING_DATABASE *)GetNextNode (
                                                                      &FormsetPrivate->XuefiRedfishStringDatabase,
-                                                                     &XuefiRedfishStringDatabase->NextXuefiRefishLanguage
+                                                                     &XuefiRedfishStringDatabase->NextXuefiRedfishLanguage
                                                                      );
   }
 
-ErrorEixt:;
+ErrorExit:;
   DEBUG ((DEBUG_ERROR, "%a: String ID (%d) is not in any x-uef-redfish string databases.\n", __func__, StringId));
   return EFI_NOT_FOUND;
 }
@@ -1500,8 +1499,8 @@ BuildXUefiRedfishStringDatabase (
   UINTN                       SupportedSchemaLangCount;
   CHAR8                       **SupportedSchemaLang;
   BOOLEAN                     StringIdMapIsBuilt;
-  UINTN                       TotalSringsAdded;
-  UINTN                       NumberPackageSrings;
+  UINTN                       TotalStringsAdded;
+  UINTN                       NumberPackageStrings;
 
   DEBUG ((DEBUG_INFO, "%a: Building x-uefi-redfish string database, HII Formset GUID - %g.\n", __func__, FormsetPrivate->Guid));
 
@@ -1533,7 +1532,7 @@ BuildXUefiRedfishStringDatabase (
     return;
   }
 
-  TotalSringsAdded = 0;
+  TotalStringsAdded = 0;
   //
   // Finding the string package.
   //
@@ -1558,9 +1557,9 @@ BuildXUefiRedfishStringDatabase (
                 AsciiStrLen (HiiStringPackageHeader->Language)
                 ) == 0)
           {
-            StringIdMapIsBuilt = CreateXuefiLanguageStringIdMap (FormsetPrivate, HiiStringPackageHeader, &NumberPackageSrings);
+            StringIdMapIsBuilt = CreateXuefiLanguageStringIdMap (FormsetPrivate, HiiStringPackageHeader, &NumberPackageStrings);
             if (StringIdMapIsBuilt) {
-              TotalSringsAdded += NumberPackageSrings;
+              TotalStringsAdded += NumberPackageStrings;
             }
 
             break;
@@ -1569,7 +1568,7 @@ BuildXUefiRedfishStringDatabase (
 
         if (StringIdMapIsBuilt == FALSE) {
           if (AsciiStrStr (HiiStringPackageHeader->Language, X_UEFI_SCHEMA_PREFIX) == NULL) {
-            DEBUG ((DEBUG_REDFISH_PLATFORM_CONFIG, "  No need to build x-uefi-redifsh string ID map for HII language %a\n", HiiStringPackageHeader->Language));
+            DEBUG ((DEBUG_REDFISH_PLATFORM_CONFIG, "  No need to build x-uefi-redfish string ID map for HII language %a\n", HiiStringPackageHeader->Language));
           } else {
             DEBUG ((DEBUG_ERROR, "  Failed to build x-uefi-redfish string ID map of HII language %a\n", HiiStringPackageHeader->Language));
           }
@@ -1580,7 +1579,7 @@ BuildXUefiRedfishStringDatabase (
     }
   }
 
-  DEBUG ((DEBUG_REDFISH_PLATFORM_CONFIG, "  Total %d x-uefi-redfish config language are added.\n", TotalSringsAdded));
+  DEBUG ((DEBUG_REDFISH_PLATFORM_CONFIG, "  Total %d x-uefi-redfish config language are added.\n", TotalStringsAdded));
 }
 
 /**
@@ -1647,9 +1646,10 @@ LoadFormset (
   Status                        = GetSupportedSchema (FormsetPrivate->HiiHandle, &FormsetPrivate->SupportedSchema);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_REDFISH_PLATFORM_CONFIG, "%a: No x-uefi-redfish configuration found on the formset - %g\n", __func__, FormsetPrivate->Guid));
-    return EFI_UNSUPPORTED; // Can't build AttributeRegistry Meni path with returning EFI_UNSUPPORTED.
   } else {
+    //
     // Building x-uefi-redfish string database
+    //
     BuildXUefiRedfishStringDatabase (FormsetPrivate);
   }
 
@@ -1728,14 +1728,18 @@ LoadFormset (
       Status = GetXuefiStringAndLangByStringId (FormsetPrivate, HiiStatementPrivate->Description, &String, NULL, NULL);
       if (!EFI_ERROR (Status)) {
         HiiStatementPrivate->DescriptionStr = String;
-        //
-        // Attach to statement list.
-        //
-        InsertTailList (&HiiFormPrivate->StatementList, &HiiStatementPrivate->Link);
       } else {
-        FreePool (HiiStatementPrivate);
+        //
+        // This is not x-uefi-redfish string and we don't cache its string for searching Redfish configure language.
+        // When caller wants the string, we will read English string by calling HiiGetString().
+        //
+        HiiStatementPrivate->DescriptionStr = NULL;
       }
 
+      //
+      // Attach to statement list.
+      //
+      InsertTailList (&HiiFormPrivate->StatementList, &HiiStatementPrivate->Link);
       HiiStatementLink = GetNextNode (&HiiForm->StatementListHead, HiiStatementLink);
     }
 
@@ -2080,7 +2084,7 @@ ProcessPendingList (
       Status = LoadFormsetList (Target->HiiHandle, FormsetList);
       if (EFI_ERROR (Status)) {
         if (Status == EFI_UNSUPPORTED) {
-          DEBUG ((DEBUG_ERROR, "  The formset has no x-uefi-refish configurations.\n"));
+          DEBUG ((DEBUG_ERROR, "  The formset has no x-uefi-redfish configurations.\n"));
         } else {
           DEBUG ((DEBUG_ERROR, "  load formset from HII handle: 0x%x failed: %r\n", Target->HiiHandle, Status));
         }

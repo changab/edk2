@@ -2,7 +2,7 @@
   This file defines the EDKII Redfish Platform Config Protocol private structure.
 
   (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP<BR>
-  Copyright (c) 2022-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+  Copyright (c) 2022-2024, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.<BR>
 
   SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -74,11 +74,11 @@ typedef struct {
 // x-uefi-redfish string database, x-uefi-redfish language based.
 //
 typedef struct {
-  LIST_ENTRY    NextXuefiRefishLanguage;                                      // Link to the next suppoted x-uefi-Redfish language.
+  LIST_ENTRY    NextXuefiRedfishLanguage;                                      // Link to the next suppoted x-uefi-Redfish language.
   CHAR8         *XuefiRedfishLanguage;                                        // x-uefi-redfish language.
   UINTN         StringsArrayBlocks;                                           // Number of the array blocks that accommodate X_UEFI_REDFISH_STRING_ARRAY_NUMBER
                                                                               // elements in each.
-  LIST_ENTRY    XuefiRefishStringArrays;                                      // Link entry of x-uefi-redfish string array.
+  LIST_ENTRY    XuefiRedfishStringArrays;                                      // Link entry of x-uefi-redfish string array.
 } REDFISH_X_UEFI_STRING_DATABASE;
 
 //
@@ -385,45 +385,6 @@ ReleaseStatementList (
   );
 
 /**
-  Get form-set private instance by the given HII handle.
-
-  @param[in]  HiiHandle       HII handle instance.
-  @param[in]  FormsetList     Form-set list to search.
-
-  @retval REDFISH_PLATFORM_CONFIG_FORM_SET_PRIVATE *   Pointer to form-set private instance.
-
-**/
-REDFISH_PLATFORM_CONFIG_FORM_SET_PRIVATE *
-GetFormsetPrivateByHiiHandle (
-  IN  EFI_HII_HANDLE  HiiHandle,
-  IN  LIST_ENTRY      *FormsetList
-  );
-
-/**
-  Get x-uefi-redfish string and language by string ID.
-
-  @param[in]      FormsetPrivate       Pointer to HII form-set private instance.
-  @param[in]      StringId             The HII string ID.
-  @param[out]     String               Optionally return USC string.
-  @param[out]     Language             Optionally return x-uefi-redfish language.
-  @param[out]     XuefiStringDatabase  Optionally return x-uefi-redfish database.
-
-  @retval  EFI_SUCCESS            String information is returned.
-           EFI_INVALID_PARAMETER  One of the given parameters to this function is
-                                  invalid.
-           EFI_NOT_FOUND          String is not found.
-
-**/
-EFI_STATUS
-GetXuefiStringAndLangByStringId (
-  IN   REDFISH_PLATFORM_CONFIG_FORM_SET_PRIVATE  *FormsetPrivate,
-  IN   EFI_STRING_ID                             StringId,
-  IN   CHAR16                                    **String OPTIONAL,
-  IN   CHAR8                                     **Language OPTIONAL,
-  OUT  REDFISH_X_UEFI_STRING_DATABASE            **XuefiStringDatabase OPTIONAL
-  );
-
-/**
   Return the HII string length. We don't check word alignment
   of the input string as the same as the checking in StrLen
   function. Because the HII string in the database is compact
@@ -455,27 +416,6 @@ UINTN
 EFIAPI
 HiiStrSize (
   IN      CONST CHAR16  *String
-  );
-
-/**
-  Compare two HII strings. We don't check word alignment
-  of the input string as the same as the checking in StrLen
-  function. Because the HII string in the database is compact
-  at the byte alignment.
-
-  @param[in]  FirstString   Input UCS format of string to search.
-  @param[in]  SecondString  Input UCS format of string to look for in
-                            FirstString;
-
-  @retval 0   The strings are identical.
-          !0  The strings are not identical.
-
-**/
-INTN
-EFIAPI
-HiiStrCmp (
-  IN      CONST CHAR16  *FirstString,
-  IN      CONST CHAR16  *SecondString
   );
 
 /**

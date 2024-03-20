@@ -2,7 +2,7 @@
   The implementation of EDKII Redfish Platform Config Protocol.
 
   (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP<BR>
-  Copyright (c) 2022-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+  Copyright (c) 2022-2024, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.<BR>
 
   SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -930,7 +930,7 @@ HiiStringToOneOfOptionValue (
 
     TmpString = HiiGetRedfishString (Statement->ParentForm->ParentFormset->HiiHandle, Schema, Option->Text);
     if (TmpString == NULL) {
-      TmpString = HiiGetRedfishString (Statement->ParentForm->ParentFormset->HiiHandle, "en-US", Option->Text);
+      TmpString = HiiGetRedfishString (Statement->ParentForm->ParentFormset->HiiHandle, ENGLISH_LANGUAGE_CODE, Option->Text);
     }
 
     if (TmpString != NULL) {
@@ -1233,7 +1233,7 @@ HiiStringToOrderedListOptionValue (
 
     TmpString = HiiGetRedfishString (Statement->ParentForm->ParentFormset->HiiHandle, Schema, Option->Text);
     if (TmpString == NULL) {
-      TmpString = HiiGetRedfishString (Statement->ParentForm->ParentFormset->HiiHandle, "en-US", Option->Text);
+      TmpString = HiiGetRedfishString (Statement->ParentForm->ParentFormset->HiiHandle, ENGLISH_LANGUAGE_CODE, Option->Text);
     }
 
     if (TmpString != NULL) {
@@ -2064,6 +2064,7 @@ RedfishPlatformConfigProtocolGetConfigureLang (
 
       ASSERT (StatementRef->Statement->Description != 0);
       if (StatementRef->Statement->Description != 0) {
+        ASSERT (StatementRef->Statement->DescriptionStr != NULL);
         TmpConfigureLangList[Index] = AllocateCopyPool (HiiStrSize (StatementRef->Statement->DescriptionStr), (VOID *)StatementRef->Statement->DescriptionStr);
         ++Index;
       }
