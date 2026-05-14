@@ -80,4 +80,6 @@
   ExtractGuidedSectionLib
 
 [BuildOptions]
-  GCC:*_*_*_CC_FLAGS = -U_MSC_VER
+  GCC:*_*_*_CC_FLAGS    = -DBROTLI_EDK2_UEFI -U_MSC_VER
+  MSFT:*_*_*_CC_FLAGS   = /DBROTLI_EDK2_UEFI /wd4201 /wd4013
+  INTEL:*_*_*_CC_FLAGS  = /DBROTLI_EDK2_UEFI /wd4201 /wd4013

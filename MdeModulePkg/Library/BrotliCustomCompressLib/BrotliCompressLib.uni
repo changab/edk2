@@ -1,0 +1,17 @@
+// /** @file
+// BrotliCustomCompressLib produces BROTLI custom compression for UEFI.
+//
+// It uses the same Brotli sources as BrotliCustomDecompressLib. Do not link
+// BrotliCustomCompressLib together with BrotliCustomDecompressLib in the same
+// image: both compile overlapping brotli object files and would duplicate symbols.
+//
+// Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+//
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+//
+// **/
+
+
+#string STR_MODULE_ABSTRACT             #language en-US "BrotliCustomCompressLib compresses data using the BROTLI custom format."
+
+#string STR_MODULE_DESCRIPTION          #language en-US "It mirrors the scratch allocator and header layout used by BrotliCustomDecompressLib."

@@ -1,9 +1,7 @@
 /** @file
-  BROTLI UEFI header file for definitions
+  BROTLI encoder UEFI / edk2 compatibility shim for third-party sources.
 
-  Allows BROTLI code to build under UEFI (edk2) build environment
-
-  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -18,15 +16,18 @@
 #define memcpy   CopyMem
 #define memmove  CopyMem
 #define memset(dest, ch, count)  SetMem(dest,(UINTN)(count),(UINT8)(ch))
-#define malloc  BrDummyMalloc
-#define free    BrDummyFree
+#define malloc   BrDummyMallocEnc
+#define free     BrDummyFreeEnc
+#define exit(x)  CpuDeadLoop ()
+
+#define EXIT_FAILURE  1
 
 VOID *
-BrDummyMalloc (
+BrDummyMallocEnc (
   IN size_t  Size
   );
 
 VOID
-BrDummyFree (
+BrDummyFreeEnc (
   IN VOID  *Ptr
   );

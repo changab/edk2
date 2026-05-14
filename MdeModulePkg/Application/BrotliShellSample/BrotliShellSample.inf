@@ -1,0 +1,54 @@
+## @file
+#  Sample UEFI application that compresses and decompresses text using the
+#  MdeModulePkg Brotli custom format (16-byte header + Brotli stream).
+#
+#  Links BrotliCustomCompressLib only (do not add BrotliCustomDecompressLib in
+#  the same module: both libraries embed overlapping brotli object code).
+#  Decompression helpers are compiled locally and match BrotliDecompress.c.
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = BrotliShellSample
+  FILE_GUID                      = 6C4A8F20-9D1B-4E7C-A3F5-8B2D0E1C4A67
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = UefiMain
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  BrotliShellSample.c
+  ../../Library/BrotliCustomDecompressLib/BrotliDecUefiSupport.c
+  BrotliShellSampleFloatStub.c | MSFT
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+[LibraryClasses]
+  UefiApplicationEntryPoint
+  UefiLib
+  MemoryAllocationLib
+  BaseMemoryLib
+  BaseLib
+  DebugLib
+  CompilerIntrinsicsLib
+  BrotliCustomCompressLib
+
+[BuildOptions]
+  # VS2026 (and other MSFT toolchains) default to /GL; _fltused in a /GL TU
+  # triggers LNK1237 when LTCG merges UefiApplicationEntryPoint with this app.
+  MSFT:*_*_*_CC_FLAGS   = /I"$(WORKSPACE)/MdeModulePkg/Library/BrotliCustomDecompressLib/brotli/c/include" /I"$(WORKSPACE)/MdeModulePkg/Library/BrotliCustomDecompressLib" /GL-
+  INTEL:*_*_*_CC_FLAGS  = /I"$(WORKSPACE)/MdeModulePkg/Library/BrotliCustomDecompressLib/brotli/c/include" /I"$(WORKSPACE)/MdeModulePkg/Library/BrotliCustomDecompressLib" /GL-
+  GCC:*_*_*_CC_FLAGS    = -I$(WORKSPACE)/MdeModulePkg/Library/BrotliCustomDecompressLib/brotli/c/include -I$(WORKSPACE)/MdeModulePkg/Library/BrotliCustomDecompressLib

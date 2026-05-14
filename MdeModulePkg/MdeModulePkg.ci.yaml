@@ -29,6 +29,7 @@
         "IgnoreFiles": [
             "Library/LzmaCustomDecompressLib",
             "Library/BrotliCustomDecompressLib",
+            "Library/BrotliCustomCompressLib",
             "Universal/RegularExpressionDxe"
         ]
     },

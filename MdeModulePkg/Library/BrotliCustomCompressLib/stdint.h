@@ -1,11 +1,11 @@
 /** @file
   Fixed-width types for third-party Brotli in the UEFI build.
 
-  This file must not include BrotliDecUefiSupport.h (that header includes this
+  This file must not include BrotliEncUefiSupport.h (that header includes this
   file), or brotli/types.h cannot pull <stdint.h> before the shim without a
   circular include. GCC would then see duplicate int64_t definitions.
 
-  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/

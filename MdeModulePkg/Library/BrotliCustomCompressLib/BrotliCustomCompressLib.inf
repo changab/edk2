@@ -1,0 +1,106 @@
+## @file
+#  BrotliCustomCompressLib compresses buffers using the BROTLI encoder.
+#
+#  Output matches the format consumed by BrotliCustomDecompressLib (16-byte
+#  custom header + Brotli stream). Encoder sources are compiled from the same
+#  brotli tree as BrotliCustomDecompressLib; do not link both libraries in one
+#  module because they duplicate brotli object definitions.
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = BrotliCompressLib
+  MODULE_UNI_FILE                = BrotliCompressLib.uni
+  FILE_GUID                      = 7A2C9E10-5B4D-4F1A-9E8C-3D6F1A2B4C5D
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = BrotliCustomCompressLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  BrotliEncUefiSupport.c
+  BrotliEncUefiSupport.h
+  BrotliCompress.c
+  BrotliCompressLibInternal.h
+  # Wrapper header files start #
+  stddef.h
+  stdint.h
+  stdlib.h
+  string.h
+  # Wrapper header files end #
+  ../BrotliCustomDecompressLib/brotli/c/common/platform.c
+  ../BrotliCustomDecompressLib/brotli/c/common/shared_dictionary.c
+  ../BrotliCustomDecompressLib/brotli/c/common/constants.c
+  ../BrotliCustomDecompressLib/brotli/c/common/context.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/command.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/compound_dictionary.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/fast_log.c
+  ../BrotliCustomDecompressLib/brotli/c/common/dictionary.c
+  ../BrotliCustomDecompressLib/brotli/c/common/transform.c
+  ../BrotliCustomDecompressLib/brotli/c/dec/bit_reader.c
+  ../BrotliCustomDecompressLib/brotli/c/dec/decode.c
+  ../BrotliCustomDecompressLib/brotli/c/dec/huffman.c
+  ../BrotliCustomDecompressLib/brotli/c/dec/prefix.c
+  ../BrotliCustomDecompressLib/brotli/c/dec/state.c
+  ../BrotliCustomDecompressLib/brotli/c/dec/static_init.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/backward_references.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/backward_references_hq.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/bit_cost.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/block_splitter.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/brotli_bit_stream.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/cluster.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/compress_fragment.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/compress_fragment_two_pass.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/dictionary_hash.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/encode.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/encoder_dict.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/entropy_encode.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/histogram.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/literal_cost.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/memory.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/metablock.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/static_dict.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/static_dict_lut.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/static_init.c
+  ../BrotliCustomDecompressLib/brotli/c/enc/utf8_util.c
+  ../BrotliCustomDecompressLib/brotli/c/include/brotli/encode.h
+  ../BrotliCustomDecompressLib/brotli/c/include/brotli/decode.h
+  ../BrotliCustomDecompressLib/brotli/c/include/brotli/port.h
+  ../BrotliCustomDecompressLib/brotli/c/include/brotli/types.h
+  ../BrotliCustomDecompressLib/brotli/c/include/brotli/shared_dictionary.h
+  ../BrotliCustomDecompressLib/brotli/c/common/constants.h
+  ../BrotliCustomDecompressLib/brotli/c/common/context.h
+  ../BrotliCustomDecompressLib/brotli/c/common/dictionary.h
+  ../BrotliCustomDecompressLib/brotli/c/common/platform.h
+  ../BrotliCustomDecompressLib/brotli/c/common/transform.h
+  ../BrotliCustomDecompressLib/brotli/c/common/version.h
+  ../BrotliCustomDecompressLib/brotli/c/dec/bit_reader.h
+  ../BrotliCustomDecompressLib/brotli/c/dec/huffman.h
+  ../BrotliCustomDecompressLib/brotli/c/dec/state.h
+  ../BrotliCustomDecompressLib/brotli/c/dec/prefix.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  BaseMemoryLib
+  CompilerIntrinsicsLib
+
+[BuildOptions]
+  GCC:*_*_*_CC_FLAGS    = -DBROTLI_EDK2_UEFI -DBROTLI_BUILD_ENC_EXTRA_API -DBROTLI_ENCODER_CLEANUP_ON_OOM -U_MSC_VER
+  MSFT:*_*_*_CC_FLAGS   = /DBROTLI_EDK2_UEFI /DBROTLI_BUILD_ENC_EXTRA_API /DBROTLI_ENCODER_CLEANUP_ON_OOM /wd4189 /wd4201 /wd4013
+  INTEL:*_*_*_CC_FLAGS  = /DBROTLI_EDK2_UEFI /DBROTLI_BUILD_ENC_EXTRA_API /DBROTLI_ENCODER_CLEANUP_ON_OOM /wd4189 /wd4201 /wd4013

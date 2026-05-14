@@ -119,6 +119,10 @@
   #
   BootLogoLib|Include/Library/BootLogoLib.h
 
+  ## @libraryclass  Compresses payloads using the BROTLI custom format consumed by BrotliCustomDecompressLib.
+  ##
+  BrotliCustomCompressLib|Include/Library/BrotliCustomCompressLib.h
+
   ## @libraryclass  Provides interfaces about Ipmi submit generic commond.
   #
   IpmiLib|Include/Library/IpmiLib.h
