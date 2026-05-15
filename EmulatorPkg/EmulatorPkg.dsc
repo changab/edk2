@@ -169,6 +169,8 @@
   AuthVariableLib|MdeModulePkg/Library/AuthVariableLibNull/AuthVariableLibNull.inf
 !endif
 
+  CompilerIntrinsicsLib|MdePkg/Library/CompilerIntrinsicsLib/CompilerIntrinsicsLib.inf
+
 [LibraryClasses.common.SEC]
   PeiServicesLib|EmulatorPkg/Library/SecPeiServicesLib/SecPeiServicesLib.inf
   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
@@ -263,7 +265,7 @@
   gEfiSecurityPkgTokenSpaceGuid.PcdUserPhysicalPresence|TRUE
 !endif
 
-  gEmulatorPkgTokenSpaceGuid.PcdEmuMemorySize|L"64!64"
+  gEmulatorPkgTokenSpaceGuid.PcdEmuMemorySize|L"640!640"
 
   # Change PcdBootManagerMenuFile to UiApp
   gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerMenuFile|{ 0x21, 0xaa, 0x2c, 0x46, 0x14, 0x76, 0x03, 0x45, 0x83, 0x6e, 0x8a, 0xb6, 0xf4, 0x66, 0x23, 0x31 }
@@ -621,6 +623,11 @@
     !endif
   !endif
 !endif
+
+  MdeModulePkg/Application/BrotliShellSample/BrotliShellSample.inf {
+    <LibraryClasses>
+      BrotliCustomCompressLib|MdeModulePkg/Library/BrotliCustomCompressLib/BrotliCustomCompressLib.inf
+  }
 
 [BuildOptions]
   #
